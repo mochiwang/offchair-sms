@@ -1,0 +1,383 @@
+/* App.css - Yelp 风格优化 */
+
+@import "leaflet/dist/leaflet.css";
+html, body, #root {
+  width: 100%;
+  min-width: 1024px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: #f6f6f6;
+  color: #333;
+}
+
+h1, h2, h3, h4, h5 {
+  font-weight: 600;
+  color: #1c1c1c;
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 2rem;
+  text-align: left;
+  margin-top: 0;
+}
+
+h2 {
+  font-size: 1.5rem;
+  text-align: left;
+}
+
+/* 卡片通用样式 */
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  width: 100%;
+  max-width: 300px;
+  flex: 1 1 250px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 卡片内部按钮 hover 动效（收藏按钮） */
+.card button {
+  transition: all 0.2s ease-in-out;
+}
+
+.card button:hover {
+  transform: scale(1.15);
+}
+
+/* 表单和按钮优化 */
+input,
+textarea,
+select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px 16px;
+  background-color: #0073bb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #005f99;
+}
+
+/* 删除按钮 */
+.delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 28px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background-color: #d9363e;
+}
+
+/* 页面容器 */
+.page-container {
+  width: 100%;
+  max-width: 1500px;    /* ✅ 控制最大宽度 */
+  margin: 0 auto;       /* ✅ 居中显示 */
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 96px;
+  box-sizing: border-box;
+}
+
+/* 顶部导航栏样式 */
+.navbar {
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  height: 72px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  z-index: 999;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.navbar-logo {
+  font-weight: bold;
+  font-size: 1.3rem;
+  color: #0073bb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-logo-image {
+  height: 36px;
+  width: auto;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1.5rem;
+  margin-left: auto;
+  padding-right: 2rem;
+  max-width: 60%;
+}
+
+.navbar-links a {
+  text-decoration: none;
+  font-weight: 500;
+  color: #333;
+  transition: color 0.2s ease;
+}
+
+.navbar-links a:hover {
+  color: #0073bb;
+}
+
+.navbar-links a.active-link {
+  color: #0073bb !important;
+  border-bottom: 2px solid #0073bb;
+  padding-bottom: 2px;
+}
+
+/* 横向卡片样式 */
+.horizontal-card {
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 2rem;
+}
+
+.loader {
+  border: 4px solid #eee;
+  border-top: 4px solid #0073bb;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 可选：给聊天弹窗添加右下角浮动位置 */
+.chat-popup-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+}
+
+.input-box {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  background-color: #fff;
+  width: 100%;
+}
+
+/* 页面发布样式 */
+.create-page {
+  width: 100%;
+  max-width: 720px;
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.create-page-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 80px;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-label {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.image-upload-row {
+  display: flex;
+  gap: 12px;
+}
+
+.image-placeholder,
+.image-upload-box {
+  flex: 1;
+  height: 80px;
+  background-color: #f2f2f2;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  color: #999;
+  border: 1px dashed #ccc;
+  cursor: pointer;
+}
+
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-chip {
+  background-color: #eee;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+}
+
+.tag-remove {
+  margin-left: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.publish-btn {
+  padding: 14px;
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.image-preview {
+  max-width: 200px;      /* 限制宽度 */
+  max-height: 150px;     /* 限制高度（可选） */
+  object-fit: cover;     /* 裁剪方式 */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+}
+
+/* App.css */
+/* 支持 Masonry 的布局样式 */
+/* 🔧 Masonry 外层容器全屏展示 */
+/* 必须加上这段样式才能让 masonry 正常工作！ */
+/* 通常放在 App.css 或对应模块 CSS 中 */
+
+/* App.css 或 index.css */
+.my-masonry-grid {
+  display: flex;
+  margin-left: -24px; /* 列间距负值偏移 */
+  width: auto;
+}
+
+.my-masonry-grid_column {
+  padding-left: 24px; /* 每列左边距 */
+  background-clip: padding-box;
+}
+
+.my-masonry-grid_column > div {
+  margin-bottom: 24px; /* 卡片底部间距 */
+}
+
+.react-stars svg {
+  fill: #d1d5db; /* 默认灰色 */
+  transition: fill 0.2s ease;
+}
+
+.react-stars svg:hover,
+.react-stars svg:hover ~ svg {
+  fill: #facc15 !important; /* 鼠标悬停黄色 */
+}
+
