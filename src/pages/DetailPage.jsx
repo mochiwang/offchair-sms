@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import StarRatings from "react-star-ratings";
+import { FaHeart } from "react-icons/fa";
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -30,6 +31,12 @@ function DetailPage() {
   const currentUser = auth.currentUser;
   const [userCompletedSlots, setUserCompletedSlots] = useState([]);
   const [userRatings, setUserRatings] = useState([]);
+  const [commentText, setCommentText] = useState("");
+const [comments, setComments] = useState([]);
+const [displayName, setDisplayName] = useState("匿名");
+const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -166,6 +173,96 @@ function DetailPage() {
     alert("感谢评分！");
     setUserRatings([{ rating: newRating }]); // 手动设置为已评分
   };
+
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      const ref = doc(db, "services", id);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        setComments(data.comments || []);
+      }
+    };
+    fetchComments();
+  }, [id]);
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim() || !currentUser) return;
+  
+    const newComment = {
+      id: Date.now(),
+      text: commentText.trim(),
+      displayName,
+      createdAt: new Date().toISOString(),
+      uid: currentUser.uid,
+      likes: 0,
+      likedBy: [],
+    };
+    
+  
+    const docRef = doc(db, "services", id);
+    const updated = [...comments, newComment];
+  
+    await setDoc(docRef, { comments: updated }, { merge: true });
+    setComments(updated);
+    setCommentText("");
+  };
+  const handleCommentDelete = async (commentId) => {
+    if (!currentUser) return;
+  
+    // 找到目标评论对象
+    const target = comments.find((c) => c.id === commentId);
+    if (!target || target.uid !== currentUser.uid) {
+      alert("只能删除自己的评论");
+      return;
+    }
+  
+    const docRef = doc(db, "services", id);
+    await setDoc(docRef, {
+      comments: comments.filter(c => c.id !== commentId)  // 本地更新
+    }, { merge: true });
+  
+    setComments(comments.filter((c) => c.id !== commentId));
+  };
+
+  const handleCommentLike = async (commentId) => {
+    if (!currentUser) return;
+  
+    const comment = comments.find((c) => c.id === commentId);
+    if (!comment) return;
+  
+    const alreadyLiked = comment.likedBy.includes(currentUser.uid);
+    const updatedComment = {
+      ...comment,
+      likes: alreadyLiked ? comment.likes - 1 : comment.likes + 1,
+      likedBy: alreadyLiked
+        ? comment.likedBy.filter((uid) => uid !== currentUser.uid)
+        : [...comment.likedBy, currentUser.uid],
+    };
+  
+    const updatedComments = comments.map((c) =>
+      c.id === commentId ? updatedComment : c
+    );
+  
+    const docRef = doc(db, "services", id);
+    await setDoc(docRef, { comments: updatedComments }, { merge: true });
+    setComments(updatedComments);
+  };
+  
+  
+
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      if (!currentUser) return;
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        setDisplayName(userSnap.data().displayName || "匿名");
+      }
+    };
+    fetchDisplayName();
+  }, [currentUser]);
   
   if (loading || !service) return <p>加载中...</p>;
 
@@ -269,11 +366,139 @@ function DetailPage() {
 </div>
 
 
-          <div style={{ marginTop: "2rem" }}>
-            <h4>评论区</h4>
-            <button>写评论</button>
-            <div style={{ marginTop: "1rem" }}>（这里展示已有评论...）</div>
-          </div>
+<div style={{ marginTop: "2rem" }}>
+  <h4>评论区</h4>
+{/* 评论输入框 */}
+<form onSubmit={handleCommentSubmit} style={{ marginTop: "0.75rem" }}>
+  <input
+    type="text"
+    value={commentText}
+    onChange={(e) => setCommentText(e.target.value)}
+    placeholder="写下你的评论..."
+    style={{
+      width: "100%",
+      padding: "8px",
+      borderRadius: "6px",
+      border: "1px solid #ccc",
+    }}
+  />
+</form>
+
+{/* 评论列表展示 */}
+{comments.length > 0 ? (
+  <>
+    {comments.slice(0, visibleComments).map((cmt) => {
+      const liked = cmt.likedBy?.includes(currentUser?.uid);
+      return (
+        <div
+        key={cmt.id}
+        style={{
+          marginBottom: "8px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* 左侧：昵称 + 内容 */}
+        <div>
+          <strong
+            style={{ color: "#5c4db1", cursor: "pointer" }}
+            onClick={() => navigate(`/user/${cmt.uid}`)}
+          >
+            @{cmt.displayName}
+          </strong>
+          ：
+          {cmt.text.split(/(@\w+)/g).map((part, i) =>
+            part.startsWith("@") ? (
+              <span
+                key={i}
+                style={{ color: "#f43f5e", cursor: "pointer" }}
+                onClick={() => navigate(`/user/${part.slice(1)}`)}
+              >
+                {part}
+              </span>
+            ) : (
+              part
+            )
+          )}
+        </div>
+  
+        {/* 右侧：红心按钮和删除 */}
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <button
+            onClick={() => handleCommentLike(cmt.id)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "4px 10px",
+              borderRadius: "999px",
+              backgroundColor: liked ? "#fff0f0" : "#f7f7f7",
+              border: liked ? "1px solid #ff4d6d" : "1px solid #ddd",
+              color: liked ? "#ff4d6d" : "#888",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.25s ease",
+              boxShadow: liked ? "0 2px 8px rgba(255,77,109,0.2)" : "none",
+            }}
+          >
+            <FaHeart
+              color={liked ? "#ff4d6d" : "#ccc"}
+              size={16}
+              style={{
+                transition: "color 0.2s ease",
+                transform: liked ? "scale(1.1)" : "scale(1)",
+              }}
+            />
+            {cmt.likes || 0}
+          </button>
+  
+          {cmt.uid === currentUser?.uid && (
+            <button
+              onClick={() => handleCommentDelete(cmt.id)}
+              style={{
+                marginLeft: "6px",
+                fontSize: "0.75rem",
+                color: "red",
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+              }}
+            >
+              删除
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  })}
+
+    {/* 🔽 查看更多按钮 */}
+    {comments.length > visibleComments && (
+      <button
+        onClick={() => setVisibleComments((prev) => prev + 5)}
+        style={{
+          marginTop: "1rem",
+          padding: "6px 12px",
+          border: "1px solid #ccc",
+          borderRadius: "6px",
+          backgroundColor: "#f7f7f7",
+          cursor: "pointer",
+        }}
+      >
+        查看更多评论
+      </button>
+    )}
+  </>
+) : (
+  <p style={{ fontSize: "0.9rem", color: "#666" }}>暂无评论</p>
+)}
+
+
+
+</div>
+
         </div>
 
         <div style={{ width: "360px" }}>

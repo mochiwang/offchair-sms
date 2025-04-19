@@ -23,6 +23,8 @@ function WorkDetailModal({ item, onClose, refresh }) {
   const [work, setWork] = useState(item);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
+
+
 const goToUserPage = (uid) => {
   navigate(`/user/${uid}`);
 };
