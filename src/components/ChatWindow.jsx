@@ -1,4 +1,3 @@
-// src/components/ChatWindow.jsx
 import { useEffect, useRef, useState } from "react";
 import {
   getFirestore,
@@ -12,6 +11,8 @@ import {
   updateDoc,
   serverTimestamp,
   setDoc,
+  deleteDoc,
+  getDocs,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import app from "../firebase";
@@ -28,7 +29,6 @@ function ChatWindow({ chatId, onClose }) {
   const [otherUID, setOtherUID] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // ✅ 加载对方信息 + 判断是否好友
   useEffect(() => {
     if (!chatId || !currentUser) return;
 
@@ -36,50 +36,59 @@ function ChatWindow({ chatId, onClose }) {
     const messagesRef = collection(db, "chats", chatId, "messages");
     const q = query(messagesRef, orderBy("createdAt"));
 
-    getDoc(chatDocRef).then((chatDoc) => {
-      if (chatDoc.exists()) {
-        const other = chatDoc.data().users.find(
-          (uid) => uid !== currentUser.uid
-        );
-        setOtherUID(other);
+    const initChatAndLoad = async () => {
+      let chatSnap = await getDoc(chatDocRef);
 
-        // 获取对方邮箱或 fallback UID
-        getDoc(doc(db, "users", other)).then((userDoc) => {
-          const email = userDoc.exists()
-            ? userDoc.data().email || other
-            : other;
-          setOtherUserEmail(email);
+      if (!chatSnap.exists()) {
+        const [uid1, uid2] = chatId.split("_");
+        const fallbackOther = uid1 === currentUser.uid ? uid2 : uid1;
+        await setDoc(chatDocRef, {
+          users: [currentUser.uid, fallbackOther],
+          createdAt: serverTimestamp(),
+          lastMessage: "",
+          lastMessageTimestamp: serverTimestamp(),
+          readTimestamps: {
+            [currentUser.uid]: serverTimestamp(),
+            [fallbackOther]: serverTimestamp(),
+          },
         });
-
-        // 判断是否好友
-        getDoc(doc(db, "users", currentUser.uid, "friends", other)).then(
-          (friendDoc) => {
-            setIsFriend(friendDoc.exists());
-          }
-        );
+        chatSnap = await getDoc(chatDocRef); // 重新获取
       }
-    });
 
-    // ✅ 更新已读时间戳
-    updateDoc(chatDocRef, {
-      [`readTimestamps.${currentUser.uid}`]: serverTimestamp(),
-    });
+      const other = chatSnap.data().users.find((uid) => uid !== currentUser.uid);
+      setOtherUID(other);
 
-    // ✅ 实时监听聊天内容
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setMessages(data);
-    });
+      const userSnap = await getDoc(doc(db, "users", other));
+      const email = userSnap.exists() ? userSnap.data().email || other : other;
+      setOtherUserEmail(email);
 
-    return () => unsubscribe();
+      const friendSnap = await getDoc(doc(db, "users", currentUser.uid, "friends", other));
+      setIsFriend(friendSnap.exists());
+
+      // ✅ 安全地更新阅读时间戳
+      await updateDoc(chatDocRef, {
+        [`readTimestamps.${currentUser.uid}`]: serverTimestamp(),
+      });
+
+      // 👂 监听消息
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setMessages(data);
+      });
+
+      return unsubscribe;
+    };
+
+    const unsubscribePromise = initChatAndLoad();
+    return () => {
+      unsubscribePromise.then((unsub) => unsub && unsub());
+    };
   }, [chatId, currentUser]);
 
-  // ✅ 自动滚动到底部
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ✅ 发送消息
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
@@ -89,8 +98,9 @@ function ChatWindow({ chatId, onClose }) {
       createdAt: serverTimestamp(),
     };
 
-    await addDoc(collection(db, "chats", chatId, "messages"), messageData);
-    await updateDoc(doc(db, "chats", chatId), {
+    const chatRef = doc(db, "chats", chatId);
+    await addDoc(collection(chatRef, "messages"), messageData);
+    await updateDoc(chatRef, {
       lastMessage: newMessage,
       lastMessageTimestamp: serverTimestamp(),
     });
@@ -98,7 +108,6 @@ function ChatWindow({ chatId, onClose }) {
     setNewMessage("");
   };
 
-  // ✅ 加为好友
   const handleAddFriend = async () => {
     if (!currentUser || !otherUID) return;
     await setDoc(doc(db, "users", currentUser.uid, "friends", otherUID), {
@@ -106,6 +115,28 @@ function ChatWindow({ chatId, onClose }) {
     });
     setIsFriend(true);
   };
+
+  const handleDeleteChat = async () => {
+    if (!chatId || !currentUser) return;
+
+    const confirmDelete = window.confirm("确定要删除该聊天记录吗？删除后无法恢复。");
+    if (!confirmDelete) return;
+
+    try {
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const messagesSnap = await getDocs(messagesRef);
+      const deletePromises = messagesSnap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+      await Promise.all(deletePromises);
+
+      await deleteDoc(doc(db, "chats", chatId));
+      alert("聊天已删除！");
+      onClose();
+    } catch (err) {
+      console.error("删除失败", err);
+      alert("删除失败，请稍后再试！");
+    }
+  };
+
 
   return (
     <div style={{
@@ -118,35 +149,65 @@ function ChatWindow({ chatId, onClose }) {
       height: "400px",
       boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
     }}>
-      {/* 顶部栏 */}
       <div style={{
         padding: "0.5rem 1rem",
         borderBottom: "1px solid #eee",
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center"
+        alignItems: "center",
+        gap: "8px"
       }}>
-        <strong>{otherUserEmail}</strong>
+        <span style={{
+          fontWeight: 600,
+          fontSize: "0.95rem",
+          color: "#333",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "120px"
+        }}>{otherUserEmail}</span>
+
         {!isFriend && (
-          <button onClick={handleAddFriend} style={{
-            marginLeft: "0.5rem",
-            fontSize: "0.85rem",
-            background: "#eee",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            cursor: "pointer",
-            padding: "4px 8px"
-          }}>加为好友</button>
+          <button
+            onClick={handleAddFriend}
+            style={{
+              padding: "4px 10px",
+              fontSize: "0.8rem",
+              borderRadius: "12px",
+              border: "1px solid #e74c3c",
+              color: "#e74c3c",
+              backgroundColor: "#fff",
+              cursor: "pointer"
+            }}
+          >
+            加为好友
+          </button>
         )}
+
+        <button
+          onClick={handleDeleteChat}
+          style={{
+            padding: "4px 10px",
+            fontSize: "0.8rem",
+            borderRadius: "12px",
+            border: "1px solid #f0f0f0",
+            color: "#888",
+            backgroundColor: "#fff",
+            cursor: "pointer"
+          }}
+        >
+          删除聊天
+        </button>
+
         <button onClick={onClose} style={{
           border: "none",
           background: "none",
           fontSize: "1.2rem",
-          cursor: "pointer"
+          cursor: "pointer",
+          color: "#999"
         }}>×</button>
       </div>
 
-      {/* 消息内容 */}
       <div style={{
         flex: 1,
         overflowY: "auto",
@@ -178,7 +239,6 @@ function ChatWindow({ chatId, onClose }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 输入栏 */}
       <div style={{
         padding: "0.5rem",
         borderTop: "1px solid #eee",

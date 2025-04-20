@@ -381,3 +381,46 @@ html, body, #root {
   fill: #facc15 !important; /* 鼠标悬停黄色 */
 }
 
+.has-slot {
+  background-color: #ffde9e !important; /* 更亮的橙黄 */
+  border-radius: 50% !important;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  color: #333 !important;
+  font-weight: bold;
+}
+
+.react-calendar__navigation__label {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #333;
+}
+.react-calendar__tile {
+  color: #333 !important; /* 深色字体，适配白色背景 */
+}
+
+.react-calendar__tile--active {
+  background: #5c4db1 !important;
+  color: white !important;
+  border-radius: 50% !important;
+}
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.react-calendar__tile--neighboringMonth,
+.react-calendar__month-view__days__day--neighboringMonth {
+  background: none;
+  color: #a3a0a0 !important;
+}
+/* 左右导航箭头按钮 */
+.react-calendar__navigation button {
+  background-color: transparent; /* 默认透明 */
+  color: #333;                   /* 箭头颜色 */
+  border: none;                 /* 移除边框 */
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+

@@ -15,6 +15,8 @@ import MyWorksTab from "../components/MyWorksTab";
 import { useNavigate } from "react-router-dom";
 
 import Masonry from 'react-masonry-css';
+import MyBookingsTab from "../components/MyBookingsTab";
+
 
 
 
@@ -73,10 +75,13 @@ function MyPage() {
         return <MyFavoritesTab />;
       case "works":
         return <MyWorksTab />;
+      case "bookings":
+        return <MyBookingsTab />;
       default:
         return null;
     }
   };
+  
 
   const avatarUrl =
     profile.avatarUrl ||
@@ -147,15 +152,18 @@ function MyPage() {
       </div>
 
       <div
-        className="tab-bar"
-        style={{
-          display: "flex",
-          gap: "1rem",
-          borderBottom: "2px solid #eee",
-          marginBottom: "1rem",
-        }}
+className="tab-bar"
+style={{
+  display: "flex",
+  gap: "1rem",
+  borderTop: "0",
+  borderLeft: "0",
+  borderRight: "0",
+  borderBottom: "2px solid #eee", // ✅ 安全写法
+  marginBottom: "1rem",
+}}
       >
-        {["services", "favorites", "works"].map((key) => (
+        {["services", "favorites", "works", "bookings"].map((key) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
@@ -165,10 +173,13 @@ function MyPage() {
             }}
           >
             {key === "services"
-              ? "我的服务"
-              : key === "favorites"
-              ? "收藏"
-              : "作品集"}
+  ? "我的服务"
+  : key === "favorites"
+  ? "收藏"
+  : key === "works"
+  ? "作品集"
+  : "我的预约"}
+
           </button>
         ))}
       </div>

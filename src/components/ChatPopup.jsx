@@ -22,7 +22,7 @@ function ChatPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [friends, setFriends] = useState([]);
   const [strangers, setStrangers] = useState([]);
-  const [openedChats, setOpenedChats] = useState([]); // { uid, email, chatId, unread }
+  const [openedChats, setOpenedChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -30,6 +30,40 @@ function ChatPopup() {
   const dragRef = useRef(null);
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
+
+  // ✅ 抽取成函数，便于重复调用
+  const loadFriendsAndStrangers = async (user) => {
+    const friendSnap = await getDocs(collection(db, "users", user.uid, "friends"));
+    const friendUIDs = friendSnap.docs.map(doc => doc.id);
+
+    const chatSnap = await getDocs(collection(db, "chats"));
+    const relatedUIDs = new Set();
+
+    for (let chatDoc of chatSnap.docs) {
+      const users = chatDoc.data().users;
+      if (!users || users.length !== 2) continue;
+      if (users.includes(user.uid)) {
+        const otherUID = users.find(uid => uid !== user.uid);
+        relatedUIDs.add(otherUID);
+      }
+    }
+
+    const fetchUsers = async (uids) => {
+      const list = [];
+      for (let uid of uids) {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        const userData = userDoc.data() || {};
+        const email = userData.email || uid;
+        const avatarUrl = userData.avatarUrl || "https://via.placeholder.com/48";
+        list.push({ uid, email, avatarUrl });
+      }
+      return list;
+    };
+
+    const allUsers = await fetchUsers(Array.from(relatedUIDs));
+    setFriends(allUsers.filter(u => friendUIDs.includes(u.uid)));
+    setStrangers(allUsers.filter(u => !friendUIDs.includes(u.uid)));
+  };
 
   useEffect(() => {
     const defaultX = window.innerWidth - 400;
@@ -45,45 +79,20 @@ function ChatPopup() {
         setActiveChatId(null);
         return;
       }
-
       setCurrentUser(user);
-
-      const friendSnap = await getDocs(collection(db, "users", user.uid, "friends"));
-      const friendUIDs = friendSnap.docs.map(doc => doc.id);
-
-      const chatSnap = await getDocs(collection(db, "chats"));
-      const relatedUIDs = new Set();
-
-      for (let chatDoc of chatSnap.docs) {
-        const users = chatDoc.data().users;
-        if (!users || users.length !== 2) continue;
-        if (users.includes(user.uid)) {
-          const otherUID = users.find(uid => uid !== user.uid);
-          relatedUIDs.add(otherUID);
-        }
-      }
-
-      const fetchUsers = async (uids) => {
-        const list = [];
-        for (let uid of uids) {
-          const userDoc = await getDoc(doc(db, "users", uid)); // ✅ 加上这一行
-          const userData = userDoc.data() || {};
-          const email = userData.email || uid;
-          const avatarUrl = userData.avatarUrl || "https://via.placeholder.com/48";
-          list.push({ uid, email, avatarUrl });
-        }
-        return list;
-      };
-
-      const allUsers = await fetchUsers(Array.from(relatedUIDs));
-      const friendsList = allUsers.filter(u => friendUIDs.includes(u.uid));
-      const strangersList = allUsers.filter(u => !friendUIDs.includes(u.uid));
-
-      setFriends(friendsList);
-      setStrangers(strangersList);
+      await loadFriendsAndStrangers(user);
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("chat_after_booking");
+    if (stored) {
+      setIsOpen(true);
+      setActiveChatId(stored);
+      localStorage.removeItem("chat_after_booking");
+    }
   }, []);
 
   const togglePopup = () => setIsOpen(!isOpen);
@@ -105,12 +114,13 @@ function ChatPopup() {
           [uid]: serverTimestamp(),
         },
       });
+      // ✅ 刚加好友时刷新列表
+      await loadFriendsAndStrangers(currentUser);
     }
 
-    // ✅ 监听未读状态并加入标签
     onSnapshot(chatRef, async (docSnap) => {
       const data = docSnap.data();
-      const lastTime = data.lastMessageTimestamp?.toMillis();
+      const lastTime = data.lastMessageTimestamp?.toMillis?.() || 0;
       const readTime = data.readTimestamps?.[currentUser.uid]?.toMillis();
       const unread = !readTime || lastTime > readTime;
 
@@ -148,6 +158,7 @@ function ChatPopup() {
     dragging.current = false;
   };
 
+  // 👇 ChatPopup 后续 UI 渲染部分略去（未贴出）
   return (
     <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
       <button

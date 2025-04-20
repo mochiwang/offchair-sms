@@ -16,6 +16,9 @@ import {
 import { getAuth } from "firebase/auth";
 import StarRatings from "react-star-ratings";
 import { FaHeart } from "react-icons/fa";
+import { onSnapshot } from "firebase/firestore";
+import CalendarWithSlots from "../components/CalendarWithSlots";
+
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -38,39 +41,35 @@ const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
 
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const docRef = doc(db, "services", id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setService({ id: docSnap.id, ...docSnap.data() });
-        setLoading(false);
-      }
+useEffect(() => {
+  const q = query(
+    collection(db, "slots"),
+    where("serviceId", "==", id),
+    where("available", "==", true)
+  );
 
-      if (currentUser) {
-        const favRef = doc(db, "users", currentUser.uid, "favorites", id);
-        const favSnap = await getDoc(favRef);
-        setIsFav(favSnap.exists());
-      }
-    };
+  const unsubscribe = onSnapshot(q, (snap) => {
+    const slotList = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setSlots(slotList);
+  });
 
-    fetchData();
-  }, [id, currentUser]);
+  return () => unsubscribe();
+}, [id]);
 
-  useEffect(() => {
-    const fetchSlots = async () => {
-      const q = query(
-        collection(db, "slots"),
-        where("serviceId", "==", id),
-        where("available", "==", true)
-      );
-      const snap = await getDocs(q);
-      const slotList = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setSlots(slotList);
-    };
 
-    fetchSlots();
-  }, [id]);
+
+useEffect(() => {
+  if (!id) return;
+  const fetchService = async () => {
+    const docRef = doc(db, "services", id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      setService({ id: docSnap.id, ...docSnap.data() });
+      setLoading(false);
+    }
+  };
+  fetchService();
+}, [id]);
 
   useEffect(() => {
     const fetchUserCompletedSlotsAndRatings = async () => {
@@ -106,20 +105,90 @@ const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
       navigate("/login");
       return;
     }
-
+  
     const chatId = [currentUser.uid, service.userId].sort().join("_");
     const chatRef = doc(db, "chats", chatId);
     const chatSnap = await getDoc(chatRef);
+  
     if (!chatSnap.exists()) {
       await setDoc(chatRef, {
         users: [currentUser.uid, service.userId],
         createdAt: serverTimestamp(),
         lastMessage: "",
+        lastMessageTimestamp: serverTimestamp(),
+        readTimestamps: {
+          [currentUser.uid]: serverTimestamp(),
+          [service.userId]: serverTimestamp(),
+        },
       });
     }
+  
+    alert("✅ 预约成功！请尽快通过聊天与商家确认时间和地址。你可以在‘我的预约’中找到对应聊天入口。");
 
-    navigate(`/chat/${chatId}`);
+  
+
   };
+  
+  const handleBooking = async (slotId) => {
+    if (!currentUser) {
+      alert("请先登录后再预约！");
+      navigate("/login");
+      return;
+    }
+  
+    try {
+      // 获取 slot 信息
+      const slotRef = doc(db, "slots", slotId);
+      const slotSnap = await getDoc(slotRef);
+      if (!slotSnap.exists()) {
+        alert("预约失败，时间段不存在！");
+        return;
+      }
+      const slotData = slotSnap.data();
+  
+      // 写入预约记录
+      const appointmentRef = doc(db, "appointments", `${currentUser.uid}_${slotId}`);
+      await setDoc(appointmentRef, {
+        userId: currentUser.uid,
+        serviceId: id,
+        slotId,
+        startTime: slotData.startTime,
+        endTime: slotData.endTime,
+        createdAt: serverTimestamp(),
+        status: "booked",
+      });
+      
+  
+      // 页面移除该 slot
+      await setDoc(
+        slotRef,
+        {
+          available: false,
+          userId: currentUser.uid,
+          bookedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      
+  
+  
+      // 弹窗提示，并引导跳转聊天
+      const chatId = [currentUser.uid, service.userId].sort().join("_");
+      const goToChat = window.confirm("✅ 预约成功！建议尽快前往聊天页面，与服务商确认见面时间和地点。是否立即前往？");
+  
+      if (goToChat) {
+        localStorage.setItem("chat_after_booking", chatId); // ✅ 提示浮窗打开
+
+      }
+    } catch (err) {
+      console.error("预约失败:", err);
+      alert("预约失败，请稍后再试！");
+    }
+  };
+  
+
+
+
 
   const toggleFavorite = async () => {
     if (!currentUser) {
@@ -506,6 +575,12 @@ const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
             <div style={{ padding: "1rem", border: "1px solid #eee", borderRadius: "10px" }}>
               <h4 style={{ marginBottom: "1rem" }}>可预约时间</h4>
               <ul style={{ paddingLeft: 0 }}>
+
+
+              <CalendarWithSlots slots={slots} onBook={handleBooking} />
+
+
+              {/*
                 {slots.map((slot) => (
                   <li key={slot.id} style={{ listStyle: "none", marginBottom: "0.5rem" }}>
                     {new Date(slot.startTime.seconds * 1000).toLocaleString()} - {new Date(slot.endTime.seconds * 1000).toLocaleTimeString()}
@@ -525,6 +600,10 @@ const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
                     </button>
                   </li>
                 ))}
+
+             */ }
+
+
               </ul>
             </div>
           )}

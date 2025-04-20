@@ -10,9 +10,12 @@ export const primaryButtonStyle = {
   };
   
   export const tabButtonStyle = {
-    backgroundColor: "#f1f1f1",  // 灰白色
+    backgroundColor: "#f1f1f1",
     color: "#333",
-    border: "none",
+    borderTop: "none",
+    borderLeft: "none",
+    borderRight: "none",
+    borderBottom: "none", // ✅ 避免和 activeTabStyle 冲突
     padding: "6px 16px",
     fontWeight: "bold",
     borderRadius: "12px",
