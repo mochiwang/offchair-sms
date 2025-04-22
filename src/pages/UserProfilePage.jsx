@@ -97,29 +97,7 @@ function UserProfilePage() {
                 {userInfo.bio || "这个人很神秘，还没有写简介。"}
               </p>
 
-             {/*
-             
-            
-              {averageRating !== null && (
-                <div style={{ margin: "4px 0" }}>
-                  <StarRatings
-                    rating={averageRating}
-                    starRatedColor="#f59e0b"
-                    starEmptyColor="#e5e7eb"
-                    numberOfStars={5}
-                    name="merchant-rating"
-                    starDimension="20px"
-                    starSpacing="2px"
-                  />
-                  <p style={{ marginTop: "4px", fontSize: "0.9rem", color: "#666" }}>
-                    平均评分：<strong style={{ color: "#f59e0b" }}>{averageRating.toFixed(1)}</strong> 分（共 {totalRatings} 条评分）
-                  </p>
-                </div>
-              )}
-             
-             */}
-
-
+      
             
 
               <button
