@@ -437,69 +437,82 @@ useEffect(() => {
   if (loading || !service) return <p>加载中...</p>;
 
   return (
-    <div className="page-container" style={{ maxWidth: "1277px", margin: "0 auto", padding: "2rem", paddingTop: "80px" }}>
-            <ServiceHeader
-  title={service.title}
-  isFav={isFav}
-  toggleFavorite={toggleFavorite}
-  sellerName={service.sellerName}
-  sellerAvatar={service.sellerAvatar}
-  sellerId={service.userId}
-  rating={service.rating}
-/>
+    <div
+      className="page-container"
+      style={{
+        maxWidth: "1277px",
+        margin: "0 auto",
+        padding: "2rem",
+        paddingTop: "80px",
+      }}
+    >
+      <ServiceHeader
+        title={service.title}
+        isFav={isFav}
+        toggleFavorite={toggleFavorite}
+        sellerName={service.sellerName}
+        sellerAvatar={service.sellerAvatar}
+        sellerId={service.userId}
+        rating={service.rating}
+      />
+  
       <ServiceImages images={service.images} />
-
-
-
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "2rem" }}>
+  
+      {/* ✅ 两列布局：左边内容 + 右边预约 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "2rem",
+        }}
+      >
+        {/* 左侧：详情、评分、评论 */}
         <div style={{ flex: 1 }}>
-        <ServiceInfo
-  description={service.description}
-  price={service.price}
-  location={service.location}
-  tags={service.tags}
-  createdAt={service.createdAt}
-/>
-
-
-          
-
+          <ServiceInfo
+            description={service.description}
+            price={service.price}
+            location={service.location}
+            tags={service.tags}
+            createdAt={service.createdAt}
+          />
+  
           {service.createdAt?.toDate && (
-            <p style={{ fontSize: "0.9rem", color: "#888" }}>发布时间：{service.createdAt.toDate().toLocaleString()}</p>
+            <p style={{ fontSize: "0.9rem", color: "#888" }}>
+              发布时间：{service.createdAt.toDate().toLocaleString()}
+            </p>
           )}
-
-<RatingAndComment
-  currentUser={currentUser}
-  userCompletedSlots={userCompletedSlots}
-  userRatings={userRatings}
-  handleRatingChange={handleRatingChange}
-  commentText={commentText}
-  setCommentText={setCommentText}
-  comments={comments}
-  handleCommentSubmit={handleCommentSubmit}
-  handleCommentLike={handleCommentLike}
-  handleCommentDelete={handleCommentDelete}
-  visibleComments={visibleComments}
-  setVisibleComments={setVisibleComments}
-  displayName={displayName}
-  navigate={navigate}
-/>
-
-</div>
-
+  
+          <RatingAndComment
+            currentUser={currentUser}
+            userCompletedSlots={userCompletedSlots}
+            userRatings={userRatings}
+            handleRatingChange={handleRatingChange}
+            commentText={commentText}
+            setCommentText={setCommentText}
+            comments={comments}
+            handleCommentSubmit={handleCommentSubmit}
+            handleCommentLike={handleCommentLike}
+            handleCommentDelete={handleCommentDelete}
+            visibleComments={visibleComments}
+            setVisibleComments={setVisibleComments}
+            displayName={displayName}
+            navigate={navigate}
+          />
         </div>
-
+  
+        {/* 右侧：预约功能 BookingPanel */}
         <div style={{ width: "360px" }}>
-        <BookingPanel
-  currentUser={currentUser}
-  service={service}
-  slots={slots}
-  handleBooking={handleBooking}
-/>
+          <BookingPanel
+            currentUser={currentUser}
+            service={service}
+            slots={slots}
+            handleBooking={handleBooking}
+          />
         </div>
       </div>
-
+    </div>
   );
 }
 
-export default DetailPage;
+export default DetailPage;  
