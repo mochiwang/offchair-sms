@@ -5,7 +5,6 @@ import app from "../firebase";
 import {
   getFirestore,
   doc,
-  getDoc,
   setDoc,
   serverTimestamp,
   collection,
@@ -14,10 +13,18 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import StarRatings from "react-star-ratings";
-import { FaHeart } from "react-icons/fa";
 import { onSnapshot } from "firebase/firestore";
-import CalendarWithSlots from "../components/CalendarWithSlots";
+import { arrayUnion } from "firebase/firestore";
+import { deleteDoc, getDoc } from "firebase/firestore";
+import ServiceHeader from "../components/ServiceHeader";
+import ServiceImages from "../components/ServiceImages";
+import BookingPanel from "../components/BookingPanel";
+import RatingAndComment from "../components/RatingAndComment";
+import ServiceInfo from "../components/ServiceInfo";
+
+
+
+
 
 
 const db = getFirestore(app);
@@ -29,7 +36,6 @@ function DetailPage() {
   const [service, setService] = useState(null);
   const [isFav, setIsFav] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [previewUrl, setPreviewUrl] = useState(null);
   const navigate = useNavigate();
   const currentUser = auth.currentUser;
   const [userCompletedSlots, setUserCompletedSlots] = useState([]);
@@ -60,16 +66,34 @@ useEffect(() => {
 
 useEffect(() => {
   if (!id) return;
+
   const fetchService = async () => {
     const docRef = doc(db, "services", id);
     const docSnap = await getDoc(docRef);
+
     if (docSnap.exists()) {
-      setService({ id: docSnap.id, ...docSnap.data() });
+      const data = docSnap.data();
+
+      // 🧩 获取商家头像与昵称
+      const sellerRef = doc(db, "users", data.userId);
+      const sellerSnap = await getDoc(sellerRef);
+      const sellerData = sellerSnap.exists() ? sellerSnap.data() : {};
+
+      setService({
+        id: docSnap.id,
+        ...data,
+        sellerName: sellerData.displayName || "商家",
+        sellerAvatar: sellerData.avatarUrl?.trim() || "https://via.placeholder.com/48",
+
+      });
+
       setLoading(false);
     }
   };
+
   fetchService();
 }, [id]);
+
 
   useEffect(() => {
     const fetchUserCompletedSlotsAndRatings = async () => {
@@ -137,7 +161,7 @@ useEffect(() => {
     }
   
     try {
-      // 获取 slot 信息
+      // 1. 获取 slot 信息
       const slotRef = doc(db, "slots", slotId);
       const slotSnap = await getDoc(slotRef);
       if (!slotSnap.exists()) {
@@ -146,7 +170,12 @@ useEffect(() => {
       }
       const slotData = slotSnap.data();
   
-      // 写入预约记录
+      // 2. 获取当前用户是否为会员
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      const isMember = userSnap.exists() && userSnap.data().isMember;
+  
+      // 3. 写入预约记录
       const appointmentRef = doc(db, "appointments", `${currentUser.uid}_${slotId}`);
       await setDoc(appointmentRef, {
         userId: currentUser.uid,
@@ -157,9 +186,8 @@ useEffect(() => {
         createdAt: serverTimestamp(),
         status: "booked",
       });
-      
   
-      // 页面移除该 slot
+      // 4. 标记该 slot 不可预约
       await setDoc(
         slotRef,
         {
@@ -169,22 +197,37 @@ useEffect(() => {
         },
         { merge: true }
       );
-      
   
+      // 5. 发送提醒（如果是会员）
+      if (isMember && service.phoneNumber) {
+        await fetch("/api/send-sms", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: service.phoneNumber,
+            message: `有人预约了你的服务《${service.title}》，请及时确认～`,
+          }),
+        });
+      } else {
+        console.log("✅ 非会员，仅邮件提醒或无提醒");
+      }
   
-      // 弹窗提示，并引导跳转聊天
+      // 6. 弹窗提醒跳转聊天
       const chatId = [currentUser.uid, service.userId].sort().join("_");
       const goToChat = window.confirm("✅ 预约成功！建议尽快前往聊天页面，与服务商确认见面时间和地点。是否立即前往？");
   
       if (goToChat) {
-        localStorage.setItem("chat_after_booking", chatId); // ✅ 提示浮窗打开
-
+        localStorage.setItem("chat_after_booking", chatId);
       }
+  
     } catch (err) {
       console.error("预约失败:", err);
       alert("预约失败，请稍后再试！");
     }
   };
+  
   
 
 
@@ -223,26 +266,56 @@ useEffect(() => {
       return;
     }
   
-    const ratingRef = doc(db, "ratings", `${currentUser.uid}_${id}`);
-    await setDoc(ratingRef, {
-      userId: currentUser.uid,
-      serviceId: id,
-      rating: newRating,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      // ✅ 写入评分记录（商家对服务评分）
+      const ratingRef = doc(db, "ratings", `${currentUser.uid}_${id}`);
+      await setDoc(ratingRef, {
+        userId: currentUser.uid,
+        serviceId: id,
+        rating: newRating,
+        createdAt: serverTimestamp(),
+      });
   
-    const q = query(collection(db, "ratings"), where("serviceId", "==", id));
-    const snap = await getDocs(q);
-    const ratings = snap.docs.map((doc) => doc.data().rating);
-    const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+      // ✅ 更新服务平均评分
+      const q = query(collection(db, "ratings"), where("serviceId", "==", id));
+      const snap = await getDocs(q);
+      const ratings = snap.docs.map((doc) => doc.data().rating);
+      const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
   
-    await setDoc(doc(db, "services", id), { rating: avg }, { merge: true });
-    setService((prev) => ({ ...prev, rating: avg }));
+      await setDoc(doc(db, "services", id), { rating: avg }, { merge: true });
+      setService((prev) => ({ ...prev, rating: avg }));
+      setUserRatings([{ rating: newRating }]);
   
-    alert("感谢评分！");
-    setUserRatings([{ rating: newRating }]); // 手动设置为已评分
+      alert("感谢评分！");
+  
+      // ✅ 同步写入到客人档案（商家对客人的评价）
+      // 我们默认只取第一个完成的 slot
+      const completedSlotId = userCompletedSlots[0];
+      const slotRef = doc(db, "slots", completedSlotId);
+      const slotSnap = await getDoc(slotRef);
+  
+      if (slotSnap.exists()) {
+        const slotData = slotSnap.data();
+        const guestUid = slotData.userId;
+  
+        await setDoc(
+          doc(db, "users", guestUid, "receivedFromMerchants", `${id}_${completedSlotId}`),
+          {
+            merchantId: currentUser.uid,
+            merchantName: displayName || "商家",
+            serviceTitle: service.title,
+            rating: newRating,
+            comment: "", // 如需加输入框填写，可扩展
+            createdAt: serverTimestamp(),
+          }
+        );
+      }
+    } catch (error) {
+      console.error("评分失败", error);
+      alert("评分失败，请稍后重试");
+    }
   };
-
+  
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -255,6 +328,7 @@ useEffect(() => {
     };
     fetchComments();
   }, [id]);
+
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentText.trim() || !currentUser) return;
@@ -268,15 +342,42 @@ useEffect(() => {
       likes: 0,
       likedBy: [],
     };
-    
   
+    // ✅ 写入当前 service 的评论列表
     const docRef = doc(db, "services", id);
     const updated = [...comments, newComment];
-  
     await setDoc(docRef, { comments: updated }, { merge: true });
     setComments(updated);
     setCommentText("");
+    if (service?.userId) {
+      const userReviewRef = doc(
+        db,
+        "users",
+        service.userId,
+        "reviews",
+        `${id}_${newComment.id}`
+      );
+      await setDoc(userReviewRef, {
+
+        ...newComment,
+        serviceId: id,
+        serviceTitle: service.title,
+        serviceImage: service.images?.[0] || "",
+      });
+    }
+  
+    // ✅ 同步写入商家档案的 allComments（防止服务删除时丢失历史）
+    const sellerUid = service.userId;
+    const sellerRef = doc(db, "users", sellerUid);
+    await setDoc(
+      sellerRef,
+      {
+        allComments: arrayUnion(newComment),
+      },
+      { merge: true }
+    );
   };
+  
   const handleCommentDelete = async (commentId) => {
     if (!currentUser) return;
   
@@ -337,53 +438,29 @@ useEffect(() => {
 
   return (
     <div className="page-container" style={{ maxWidth: "1277px", margin: "0 auto", padding: "2rem", paddingTop: "80px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-        <h1 style={{ fontSize: "2rem", fontWeight: "bold" }}>{service.title}</h1>
-        <span style={{ fontSize: "2rem", cursor: "pointer", color: isFav ? "#f7b500" : "#aaa", userSelect: "none" }} onClick={toggleFavorite}>
-          {isFav ? "★" : "☆"}
-        </span>
-      </div>
+            <ServiceHeader
+  title={service.title}
+  isFav={isFav}
+  toggleFavorite={toggleFavorite}
+  sellerName={service.sellerName}
+  sellerAvatar={service.sellerAvatar}
+  sellerId={service.userId}
+  rating={service.rating}
+/>
+      <ServiceImages images={service.images} />
 
-      {service.images?.length > 0 && (
-        <div style={{ display: "flex", gap: "8px", marginBottom: "2rem", height: "501px" }}>
-          <img src={service.images[0]} alt="main" onClick={() => setPreviewUrl(service.images[0])} style={{ width: "65%", height: "100%", objectFit: "cover", borderRadius: "12px", cursor: "pointer" }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "35%" }}>
-            {service.images.slice(1, 5).map((url, index) => (
-              <img key={index} src={url} alt={`sub-${index}`} onClick={() => setPreviewUrl(url)} style={{ width: "100%", height: "calc(25% - 6px)", objectFit: "cover", borderRadius: "12px", cursor: "pointer" }} />
-            ))}
-          </div>
-        </div>
-      )}
 
-      {previewUrl && (
-        <div onClick={() => setPreviewUrl(null)} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999, cursor: "pointer" }}>
-          <img src={previewUrl} alt="preview" style={{ maxWidth: "90vw", maxHeight: "90vh", borderRadius: "12px", boxShadow: "0 0 10px rgba(0,0,0,0.3)" }} />
-        </div>
-      )}
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: "2rem" }}>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: "1.1rem", color: "#555" }}>{service.description}</p>
-          <p><strong>价格：</strong> ¥{service.price}</p>
-          <p><strong>地址：</strong> {service.location || "请登录后查看"}</p>
-          <p><strong>标签：</strong> {service.tags?.map((t) => `#${t}`).join(" ")}</p>
+        <ServiceInfo
+  description={service.description}
+  price={service.price}
+  location={service.location}
+  tags={service.tags}
+  createdAt={service.createdAt}
+/>
 
-         
-          <div style={{ display: "flex", alignItems: "center", margin: "0.5rem 0" }}>
-  <span style={{ fontWeight: "bold", marginRight: "0.5rem" }}>评分：</span>
-  <StarRatings
-    rating={service.rating || 0}
-    starRatedColor="#facc15"
-    starEmptyColor="#d1d5db"
-    numberOfStars={5}
-    name="display-rating"
-    starDimension="28px"
-    starSpacing="4px"
-  />
-  <span style={{ marginLeft: "0.5rem", color: "#555" }}>
-    {service.rating ? `${service.rating.toFixed(1)} 分` : "暂无评分"}
-  </span>
-</div>
 
           
 
@@ -391,225 +468,37 @@ useEffect(() => {
             <p style={{ fontSize: "0.9rem", color: "#888" }}>发布时间：{service.createdAt.toDate().toLocaleString()}</p>
           )}
 
-<div style={{ display: "flex", alignItems: "center", marginTop: "2rem", flexWrap: "wrap" }}>
-  <span style={{ marginRight: "0.5rem", fontSize: "1rem" }}>为该服务打分：</span>
-
-  {/* 用户未登录 */}
-  {!currentUser && (
-    <span style={{ color: "#888" }}>请先登录后评分</span>
-  )}
-
-  {/* 没有预约或预约未完成 */}
-  {currentUser && userCompletedSlots.length === 0 && (
-    <span style={{ color: "#888" }}>服务完成后可评分</span>
-  )}
-
-  {/* 已评分 */}
-  {currentUser && userCompletedSlots.length > 0 && userRatings.length > 0 && (
-    <>
-      <StarRatings
-        rating={userRatings[0].rating}
-        starRatedColor="#facc15"
-        starEmptyColor="#d1d5db"
-        starDimension="28px"
-        starSpacing="4px"
-      />
-      <span style={{ marginLeft: "0.5rem", color: "#888" }}>你已完成评分，感谢你的反馈！</span>
-    </>
-  )}
-
-  {/* 尚未评分，可以评分 */}
-  {currentUser && userCompletedSlots.length > 0 && userRatings.length === 0 && (
-    <StarRatings
-      rating={0}
-      starRatedColor="#facc15"
-      starEmptyColor="#d1d5db"
-      starHoverColor="#facc15"
-      numberOfStars={5}
-      name="user-rating"
-      starDimension="28px"
-      starSpacing="4px"
-      changeRating={handleRatingChange}
-    />
-  )}
-</div>
-
-
-<div style={{ marginTop: "2rem" }}>
-  <h4>评论区</h4>
-{/* 评论输入框 */}
-<form onSubmit={handleCommentSubmit} style={{ marginTop: "0.75rem" }}>
-  <input
-    type="text"
-    value={commentText}
-    onChange={(e) => setCommentText(e.target.value)}
-    placeholder="写下你的评论..."
-    style={{
-      width: "100%",
-      padding: "8px",
-      borderRadius: "6px",
-      border: "1px solid #ccc",
-    }}
-  />
-</form>
-
-{/* 评论列表展示 */}
-{comments.length > 0 ? (
-  <>
-    {comments.slice(0, visibleComments).map((cmt) => {
-      const liked = cmt.likedBy?.includes(currentUser?.uid);
-      return (
-        <div
-        key={cmt.id}
-        style={{
-          marginBottom: "8px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {/* 左侧：昵称 + 内容 */}
-        <div>
-          <strong
-            style={{ color: "#5c4db1", cursor: "pointer" }}
-            onClick={() => navigate(`/user/${cmt.uid}`)}
-          >
-            @{cmt.displayName}
-          </strong>
-          ：
-          {cmt.text.split(/(@\w+)/g).map((part, i) =>
-            part.startsWith("@") ? (
-              <span
-                key={i}
-                style={{ color: "#f43f5e", cursor: "pointer" }}
-                onClick={() => navigate(`/user/${part.slice(1)}`)}
-              >
-                {part}
-              </span>
-            ) : (
-              part
-            )
-          )}
-        </div>
-  
-        {/* 右侧：红心按钮和删除 */}
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <button
-            onClick={() => handleCommentLike(cmt.id)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "4px 10px",
-              borderRadius: "999px",
-              backgroundColor: liked ? "#fff0f0" : "#f7f7f7",
-              border: liked ? "1px solid #ff4d6d" : "1px solid #ddd",
-              color: liked ? "#ff4d6d" : "#888",
-              fontSize: "0.85rem",
-              fontWeight: 500,
-              cursor: "pointer",
-              transition: "all 0.25s ease",
-              boxShadow: liked ? "0 2px 8px rgba(255,77,109,0.2)" : "none",
-            }}
-          >
-            <FaHeart
-              color={liked ? "#ff4d6d" : "#ccc"}
-              size={16}
-              style={{
-                transition: "color 0.2s ease",
-                transform: liked ? "scale(1.1)" : "scale(1)",
-              }}
-            />
-            {cmt.likes || 0}
-          </button>
-  
-          {cmt.uid === currentUser?.uid && (
-            <button
-              onClick={() => handleCommentDelete(cmt.id)}
-              style={{
-                marginLeft: "6px",
-                fontSize: "0.75rem",
-                color: "red",
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-              }}
-            >
-              删除
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  })}
-
-    {/* 🔽 查看更多按钮 */}
-    {comments.length > visibleComments && (
-      <button
-        onClick={() => setVisibleComments((prev) => prev + 5)}
-        style={{
-          marginTop: "1rem",
-          padding: "6px 12px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          backgroundColor: "#f7f7f7",
-          cursor: "pointer",
-        }}
-      >
-        查看更多评论
-      </button>
-    )}
-  </>
-) : (
-  <p style={{ fontSize: "0.9rem", color: "#666" }}>暂无评论</p>
-)}
-
-
+<RatingAndComment
+  currentUser={currentUser}
+  userCompletedSlots={userCompletedSlots}
+  userRatings={userRatings}
+  handleRatingChange={handleRatingChange}
+  commentText={commentText}
+  setCommentText={setCommentText}
+  comments={comments}
+  handleCommentSubmit={handleCommentSubmit}
+  handleCommentLike={handleCommentLike}
+  handleCommentDelete={handleCommentDelete}
+  visibleComments={visibleComments}
+  setVisibleComments={setVisibleComments}
+  displayName={displayName}
+  navigate={navigate}
+/>
 
 </div>
 
         </div>
 
         <div style={{ width: "360px" }}>
-          {currentUser?.uid !== service.userId && slots.length > 0 && (
-            <div style={{ padding: "1rem", border: "1px solid #eee", borderRadius: "10px" }}>
-              <h4 style={{ marginBottom: "1rem" }}>可预约时间</h4>
-              <ul style={{ paddingLeft: 0 }}>
-
-
-              <CalendarWithSlots slots={slots} onBook={handleBooking} />
-
-
-              {/*
-                {slots.map((slot) => (
-                  <li key={slot.id} style={{ listStyle: "none", marginBottom: "0.5rem" }}>
-                    {new Date(slot.startTime.seconds * 1000).toLocaleString()} - {new Date(slot.endTime.seconds * 1000).toLocaleTimeString()}
-                    <button
-                      onClick={() => handleBooking(slot.id)}
-                      style={{
-                        marginLeft: "1rem",
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                        backgroundColor: "#4caf50",
-                        color: "#fff",
-                        border: "none",
-                        cursor: "pointer",
-                      }}
-                    >
-                      预约
-                    </button>
-                  </li>
-                ))}
-
-             */ }
-
-
-              </ul>
-            </div>
-          )}
+        <BookingPanel
+  currentUser={currentUser}
+  service={service}
+  slots={slots}
+  handleBooking={handleBooking}
+/>
         </div>
       </div>
-    </div>
+
   );
 }
 

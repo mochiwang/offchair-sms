@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 import Masonry from 'react-masonry-css';
 import MyBookingsTab from "../components/MyBookingsTab";
+import MyReviewsTab from "../components/MyReviewsTab";
 
 
 
@@ -77,6 +78,8 @@ function MyPage() {
         return <MyWorksTab />;
       case "bookings":
         return <MyBookingsTab />;
+      case "reviews":
+        return <MyReviewsTab />;
       default:
         return null;
     }
@@ -163,25 +166,27 @@ style={{
   marginBottom: "1rem",
 }}
       >
-        {["services", "favorites", "works", "bookings"].map((key) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            style={{
-              ...tabButtonStyle,
-              ...(activeTab === key ? activeTabStyle : {}),
-            }}
-          >
-            {key === "services"
-  ? "我的服务"
-  : key === "favorites"
-  ? "收藏"
-  : key === "works"
-  ? "作品集"
-  : "我的预约"}
+{["services", "favorites", "works", "bookings", "reviews"].map((key) => (
+  <button
+    key={key}
+    onClick={() => setActiveTab(key)}
+    style={{
+      ...tabButtonStyle,
+      ...(activeTab === key ? activeTabStyle : {}),
+    }}
+  >
+    {key === "services"
+      ? "我的服务"
+      : key === "favorites"
+      ? "收藏"
+      : key === "works"
+      ? "作品集"
+      : key === "bookings"
+      ? "我的预约"
+      : "我的评价"}
+  </button>
+))}
 
-          </button>
-        ))}
       </div>
 
       <div className="tab-content">{renderTab()}</div>

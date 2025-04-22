@@ -4,144 +4,184 @@ import {
   getFirestore,
   collection,
   query,
-  where,
   getDocs,
   doc,
   getDoc,
   deleteDoc,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 function MyBookingsTab() {
-  const [bookings, setBookings] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const currentUser = auth.currentUser;
+  const navigate = useNavigate();
 
-  const handleCancelBooking = async (bookingId, slotId) => {
-    try {
-      await deleteDoc(doc(db, "appointments", bookingId));
-      const slotRef = doc(db, "slots", slotId);
-      await setDoc(slotRef, { available: true, userId: null }, { merge: true });
-      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
-      alert("已取消预约！");
-    } catch (err) {
-      console.error("取消失败", err);
-      alert("取消失败，请稍后再试");
-    }
+  const handleCancel = async (bookingId, slotId) => {
+    await deleteDoc(doc(db, "appointments", bookingId));
+    await setDoc(doc(db, "slots", slotId), { available: true, userId: null }, { merge: true });
+    setAppointments((prev) => prev.filter((b) => b.id !== bookingId));
+    alert("已取消预约");
+  };
+
+  const handleConfirm = async (bookingId) => {
+    await updateDoc(doc(db, "appointments", bookingId), { status: "confirmed" });
+    setAppointments((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: "confirmed" } : b))
+    );
+    alert("✅ 已确认预约");
   };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      if (!currentUser) return;
+    if (!currentUser) return;
 
-      const q = query(
-        collection(db, "appointments"),
-        where("userId", "==", currentUser.uid)
-      );
+    const fetch = async () => {
+      const q = query(collection(db, "appointments"));
       const snap = await getDocs(q);
 
-      const results = await Promise.all(
-        snap.docs.map(async (docSnap) => {
-          const data = docSnap.data();
-          const serviceRef = doc(db, "services", data.serviceId);
-          const serviceSnap = await getDoc(serviceRef);
+      const list = await Promise.all(
+        snap.docs.map(async (d) => {
+          const data = d.data();
+          const serviceSnap = await getDoc(doc(db, "services", data.serviceId));
+          const service = serviceSnap.exists() ? serviceSnap.data() : null;
+
+          const guestSnap = await getDoc(doc(db, "users", data.userId));
+          const guest = guestSnap.exists() ? guestSnap.data() : { displayName: "匿名用户" };
+
           return {
             ...data,
-            id: docSnap.id,
-            service: serviceSnap.exists() ? serviceSnap.data() : null,
+            id: d.id,
+            service,
+            guest,
           };
         })
       );
 
-      setBookings(results);
+      const future = list.filter((b) => {
+        const end = b.endTime?.seconds * 1000;
+        return end && end > Date.now();
+      });
+
+      const myAppointments = future.filter(
+        (b) =>
+          b.userId === currentUser.uid || b.serviceOwnerId === currentUser.uid
+      );
+
+      setAppointments(myAppointments);
     };
 
-    fetchBookings();
+    fetch();
   }, [currentUser]);
 
   return (
     <div style={{ padding: "1rem 0" }}>
-      {bookings.length === 0 ? (
-        <p style={{ color: "#666", fontSize: "0.95rem" }}>你还没有预约任何服务。</p>
+      {appointments.length === 0 ? (
+        <p style={{ color: "#666", fontSize: "0.95rem" }}>你还没有任何即将到来的预约。</p>
       ) : (
-        bookings.map((booking) => (
-          <div
-            key={booking.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              border: "1px solid #eee",
-              borderRadius: "10px",
-              padding: "1rem",
-              marginBottom: "1rem",
-            }}
-          >
-            <img
-              src={booking.service?.images?.[0] || "/placeholder.jpg"}
-              alt="service"
+        appointments.map((b) => {
+          const isGuest = b.userId === currentUser.uid;
+          const isMerchant = b.serviceOwnerId === currentUser.uid;
+
+          const bgColor = isGuest ? "#f9f5ff" : "#f0f9ff";
+          const borderColor = isGuest ? "#d8b4fe" : "#93c5fd";
+
+          return (
+            <div
+              key={b.id}
               style={{
-                width: "100px",
-                height: "80px",
-                objectFit: "cover",
-                borderRadius: "8px",
+                backgroundColor: bgColor,
+                border: `1px solid ${borderColor}`,
+                borderRadius: "16px",
+                padding: "1.25rem",
+                marginBottom: "1.5rem",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                transition: "transform 0.2s ease",
               }}
-            />
-            <div>
-              <h4 style={{ margin: 0 }}>{booking.service?.title || "未知服务"}</h4>
-              <p style={{ margin: "4px 0", color: "#555" }}>
-                🕒 {new Date(booking.startTime.seconds * 1000).toLocaleString()} - {new Date(booking.endTime.seconds * 1000).toLocaleTimeString()}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.01)")}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <h3 style={{ margin: 0, fontSize: "1.2rem", color: "#111" }}>
+                {b.service?.title || "未知服务"}
+              </h3>
+
+              <p style={{ margin: "6px 0", color: "#555" }}>
+                🕒 {new Date(b.startTime.seconds * 1000).toLocaleString()}
               </p>
-              <p style={{ margin: "4px 0", fontSize: "0.85rem", color: "#777" }}>
-                📍 {booking.service?.location || "未提供地址"}
-              </p>
-              <p style={{ fontSize: "0.8rem", color: "#aaa" }}>
-                状态：{booking.status}
-              </p>
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-                <button
-                  onClick={() => {
-                    const chatId = [currentUser.uid, booking.service.userId].sort().join("_");
-                    localStorage.setItem("chat_after_booking", chatId);
-                    window.location.reload();
-                  }}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    backgroundColor: "#eef",
-                    color: "#333",
-                    border: "1px solid #cce",
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  开始聊天
-                </button>
+
+              {/* 按钮组 */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.75rem" }}>
+                {isGuest && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const chatId = [currentUser.uid, b.service.userId].sort().join("_");
+                        localStorage.setItem("chat_after_booking", chatId);
+                        window.location.reload();
+                      }}
+                      style={buttonStyle("#fff0f3", "#ff2d55", "#ff2d55")}
+                    >
+                      联系商家
+                    </button>
+                    <button
+                      onClick={() => handleCancel(b.id, b.slotId)}
+                      style={buttonStyle("#ffecec", "#d33", "#d33")}
+                    >
+                      取消预约
+                    </button>
+                  </>
+                )}
+
+                {isMerchant && (
+                  <>
+                    {b.status === "booked" && (
+                      <button
+                        onClick={() => handleConfirm(b.id)}
+                        style={buttonStyle("#ff2d55", "#ff2d55", "#fff")}
+                      >
+                        确认预约
+                      </button>
+                    )}
+                    <button
+                      onClick={() => navigate(`/user/${b.userId}`)}
+                      style={buttonStyle("#f4f4f5", "#ccc")}
+                    >
+                      查看客人主页
+                    </button>
+                  </>
+                )}
 
                 <button
-                  onClick={() => handleCancelBooking(booking.id, booking.slotId)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    backgroundColor: "#ffecec",
-                    color: "#d33",
-                    border: "1px solid #f5c2c2",
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                  }}
+                  onClick={() => navigate(`/detail/${b.serviceId}`)}
+                  style={buttonStyle("#f4f4f5", "#ccc")}
                 >
-                  取消预约
+                  查看服务详情
                 </button>
               </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
+}
+
+function buttonStyle(bg, border, text = "#333") {
+  return {
+    padding: "8px 14px",
+    borderRadius: "999px",
+    backgroundColor: bg,
+    color: text,
+    border: `1px solid ${border}`,
+    fontSize: "0.9rem",
+    fontWeight: 500,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  };
 }
 
 export default MyBookingsTab;

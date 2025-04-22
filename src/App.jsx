@@ -17,6 +17,7 @@ import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
 import UserProfilePage from "./pages/UserProfilePage";
 import './App.css';
+import TestPage from "./pages/TestPage";
 
 const auth = getAuth(app);
 const GOOGLE_MAPS_API_KEY = "AIzaSyDcIEOYVRuvJicRMu6uPloOAk9QrbEk7ww";
@@ -40,7 +41,8 @@ function AppContent() {
   <Layout user={user}>
     <CreatePage />
   </Layout>
-} />
+} />  
+      <Route path="/test" element={<TestPage />} />
       <Route path="/detail/:id" element={<Layout user={user}><DetailPage /></Layout>} />
       <Route path="/login" element={<Layout user={user}><LoginPage /></Layout>} />
       <Route path="/mypage" element={<RequireAuth><Layout user={user}><MyPage /></Layout></RequireAuth>} />

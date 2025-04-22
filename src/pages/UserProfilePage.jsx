@@ -1,5 +1,4 @@
-// src/pages/UserProfilePage.jsx
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   getFirestore,
@@ -7,12 +6,14 @@ import {
   getDocs,
   getDoc,
   query,
+  where,
   orderBy,
   doc,
 } from "firebase/firestore";
 import app from "../firebase";
 import WorkDetailModal from "../components/WorkDetailModal";
-import { useNavigate } from "react-router-dom";
+import UserReviewsTab from "../components/UserReviewsTab";
+import StarRatings from "react-star-ratings";
 
 const db = getFirestore(app);
 
@@ -21,12 +22,14 @@ function UserProfilePage() {
   const [userMedia, setUserMedia] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
+  const [averageRating, setAverageRating] = useState(null);
+  const [totalRatings, setTotalRatings] = useState(0);
   const navigate = useNavigate();
 
   const fetchMedia = async () => {
     const q = query(collection(db, "users", uid, "gallery"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
-    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     setUserMedia(items);
   };
 
@@ -37,13 +40,36 @@ function UserProfilePage() {
     }
   };
 
+  const fetchRatings = async () => {
+    if (!uid) return;
+
+    // 获取该用户发布的所有服务
+    const serviceSnap = await getDocs(
+      query(collection(db, "services"), where("userId", "==", uid))
+    );
+    const serviceIds = serviceSnap.docs.map((doc) => doc.id);
+    if (serviceIds.length === 0) return;
+
+    // 获取所有评分，并筛选相关服务
+    const ratingSnap = await getDocs(collection(db, "ratings"));
+    const ratings = ratingSnap.docs
+      .map((doc) => doc.data())
+      .filter((r) => serviceIds.includes(r.serviceId));
+
+    if (ratings.length === 0) return;
+
+    const avg = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+    setAverageRating(avg);
+    setTotalRatings(ratings.length);
+  };
+
   useEffect(() => {
     fetchMedia();
     fetchUserInfo();
+    fetchRatings();
   }, [uid]);
 
   return (
-
     <div style={{ padding: "2rem", maxWidth: "900px", margin: "0 auto" }}>
       {userInfo && (
         <>
@@ -67,16 +93,40 @@ function UserProfilePage() {
             />
             <div>
               <h3 style={{ margin: 0 }}>{userInfo.displayName || "用户"}</h3>
-              <p style={{ color: "#666", margin: "4px 0" }}>{userInfo.bio || "这个人很神秘，还没有写简介。"}</p>
-              <button style={{
-                padding: "6px 14px",
-                borderRadius: "999px",
-                backgroundColor: "#5c4db1",
-                color: "white",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "0.9rem"
-              }}>
+              <p style={{ color: "#666", margin: "4px 0" }}>
+                {userInfo.bio || "这个人很神秘，还没有写简介。"}
+              </p>
+
+              {/* ⭐ 商家评分展示 */}
+              {averageRating !== null && (
+                <div style={{ margin: "4px 0" }}>
+                  <StarRatings
+                    rating={averageRating}
+                    starRatedColor="#f59e0b"
+                    starEmptyColor="#e5e7eb"
+                    numberOfStars={5}
+                    name="merchant-rating"
+                    starDimension="20px"
+                    starSpacing="2px"
+                  />
+                  <p style={{ marginTop: "4px", fontSize: "0.9rem", color: "#666" }}>
+                    平均评分：<strong style={{ color: "#f59e0b" }}>{averageRating.toFixed(1)}</strong> 分（共 {totalRatings} 条评分）
+                  </p>
+                </div>
+              )}
+
+              <button
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  backgroundColor: "#5c4db1",
+                  color: "white",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  marginTop: "0.5rem",
+                }}
+              >
                 + 关注
               </button>
             </div>
@@ -84,10 +134,16 @@ function UserProfilePage() {
         </>
       )}
 
-
-
+      {/* 作品区 */}
       <h3 style={{ marginBottom: "1rem" }}>📸 作品</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: "1rem",
+          marginBottom: "3rem",
+        }}
+      >
         {userMedia.map((item) => (
           <div
             key={item.id}
@@ -97,7 +153,7 @@ function UserProfilePage() {
               borderRadius: "8px",
               padding: "0.5rem",
               cursor: "pointer",
-              backgroundColor: "#fafafa"
+              backgroundColor: "#fafafa",
             }}
           >
             {item.images?.length > 0 ? (
@@ -112,6 +168,13 @@ function UserProfilePage() {
         ))}
       </div>
 
+      {/* 服务评价区 */}
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid #eee" }}>
+        <h3 style={{ marginBottom: "1rem" }}>💬 服务评价</h3>
+        <UserReviewsTab uid={uid} />
+      </div>
+
+      {/* 作品预览浮窗 */}
       {previewItem && (
         <WorkDetailModal
           item={previewItem}
