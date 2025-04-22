@@ -6,7 +6,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import StarRatings from "react-star-ratings";
+
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -68,16 +68,7 @@ function MyReviewsTab() {
           </div>
 
           <div style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "#888" }}>
-            评分：
-            <StarRatings
-              rating={rev.rating}
-              starRatedColor="#facc15"
-              starEmptyColor="#e5e7eb"
-              numberOfStars={5}
-              name={`rating-${i}`}
-              starDimension="18px"
-              starSpacing="2px"
-            />
+
             {rev.createdAt && (
               <div style={{ marginTop: "4px", fontSize: "0.8rem" }}>
                 时间：{new Date(rev.createdAt.seconds * 1000).toLocaleString()}

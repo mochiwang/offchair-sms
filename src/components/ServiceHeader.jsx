@@ -1,6 +1,6 @@
 // src/components/ServiceHeader.jsx
 import { useNavigate } from "react-router-dom";
-import StarRatings from "react-star-ratings";
+
 
 function ServiceHeader({
   title,
@@ -70,15 +70,6 @@ function ServiceHeader({
       {/* 评分展示 */}
       <div style={{ display: "flex", alignItems: "center", margin: "0.5rem 0" }}>
         <span style={{ fontWeight: "bold", marginRight: "0.5rem" }}>评分：</span>
-        <StarRatings
-          rating={rating || 0}
-          starRatedColor="#facc15"
-          starEmptyColor="#d1d5db"
-          numberOfStars={5}
-          name="display-rating"
-          starDimension="28px"
-          starSpacing="4px"
-        />
         <span style={{ marginLeft: "0.5rem", color: "#555" }}>
           {rating ? `${rating.toFixed(1)} 分` : "暂无评分"}
         </span>

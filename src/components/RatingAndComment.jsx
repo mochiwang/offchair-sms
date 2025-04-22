@@ -1,6 +1,6 @@
 // src/components/RatingAndComment.jsx
 import { useState } from "react";
-import StarRatings from "react-star-ratings";
+
 import { FaHeart } from "react-icons/fa";
 
 function RatingAndComment({
@@ -32,30 +32,12 @@ function RatingAndComment({
 
         {currentUser && userCompletedSlots.length > 0 && userRatings.length > 0 && (
           <>
-            <StarRatings
-              rating={userRatings[0].rating}
-              starRatedColor="#facc15"
-              starEmptyColor="#d1d5db"
-              starDimension="28px"
-              starSpacing="4px"
-            />
+
             <span style={{ marginLeft: "0.5rem", color: "#888" }}>你已完成评分，感谢你的反馈！</span>
           </>
         )}
 
-        {currentUser && userCompletedSlots.length > 0 && userRatings.length === 0 && (
-          <StarRatings
-            rating={0}
-            starRatedColor="#facc15"
-            starEmptyColor="#d1d5db"
-            starHoverColor="#facc15"
-            numberOfStars={5}
-            name="user-rating"
-            starDimension="28px"
-            starSpacing="4px"
-            changeRating={handleRatingChange}
-          />
-        )}
+        {currentUser && userCompletedSlots.length > 0 && userRatings.length === 0 }
       </div>
 
       <div style={{ marginTop: "2rem" }}>
