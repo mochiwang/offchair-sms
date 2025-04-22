@@ -31,8 +31,8 @@ function TestPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          to: "+185554902594", // 你的测试手机号
-          message: "这是一条来自 TestPage 的测试短信 🚀",
+          to: "+15105745306", // 你的测试手机号
+          message: "offchair testing",
         }),
       });
       
