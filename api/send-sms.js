@@ -29,6 +29,13 @@ export default async function handler(req, res) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_PHONE_NUMBER;
 
+  // ✅ 👇 加这一段日志
+console.log("🔍 Twilio 环境变量检查：", {
+    TWILIO_ACCOUNT_SID: accountSid,
+    TWILIO_AUTH_TOKEN: authToken ? "(已读取)" : "(未读取)",
+    TWILIO_PHONE_NUMBER: from
+  });
+
   if (!accountSid || !authToken || !from) {
     return res.status(500).json({
       success: false,
