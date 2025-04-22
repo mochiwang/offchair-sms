@@ -13,7 +13,7 @@ import {
 import app from "../firebase";
 import WorkDetailModal from "../components/WorkDetailModal";
 import UserReviewsTab from "../components/UserReviewsTab";
-//import StarRatings from "react-star-ratings";
+
 
 const db = getFirestore(app);
 
