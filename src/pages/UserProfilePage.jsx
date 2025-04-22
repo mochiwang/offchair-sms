@@ -13,7 +13,7 @@ import {
 import app from "../firebase";
 import WorkDetailModal from "../components/WorkDetailModal";
 import UserReviewsTab from "../components/UserReviewsTab";
-import StarRatings from "react-star-ratings";
+//import StarRatings from "react-star-ratings";
 
 const db = getFirestore(app);
 
@@ -97,7 +97,9 @@ function UserProfilePage() {
                 {userInfo.bio || "这个人很神秘，还没有写简介。"}
               </p>
 
-              {/* ⭐ 商家评分展示 */}
+             {/*
+             
+            
               {averageRating !== null && (
                 <div style={{ margin: "4px 0" }}>
                   <StarRatings
@@ -114,6 +116,11 @@ function UserProfilePage() {
                   </p>
                 </div>
               )}
+             
+             */}
+
+
+            
 
               <button
                 style={{
