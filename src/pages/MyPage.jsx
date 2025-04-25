@@ -60,9 +60,7 @@ function MyPage() {
 
 
 
-  useEffect(() => {
-    console.log("🔥 当前 UID：", currentUser?.uid);
-  }, [currentUser]);
+
   const fetchProfile = async () => {
     if (user) {
       const profileRef = doc(db, "users", user.uid);
