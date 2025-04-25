@@ -55,10 +55,10 @@ const handleCheckout = async (booking) => {
     const data = await res.json();
     const stripe = await stripePromise;
 
-    if (data.id) {
-      await stripe.redirectToCheckout({ sessionId: data.id });
+    if (data.url) {
+      window.location.href = data.url; // ✅ 测试版跳转方式
     } else {
-      alert("❌ 创建支付会话失败，请稍后再试");
+      alert("❌ 获取支付链接失败");
     }
   } catch (error) {
     console.error("跳转 Stripe 付款失败:", error);

@@ -1,3 +1,4 @@
+// pages/api/create-checkout-session.js
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -41,7 +42,9 @@ export default async function handler(req, res) {
       cancel_url: `${req.headers.origin}/pay/cancel`,
     });
 
-    res.status(200).json({ id: session.id });
+    // ✅ 测试阶段返回 session.url 供前端直接跳转
+    res.status(200).json({ url: session.url });
+
   } catch (err) {
     console.error("❌ 创建支付会话失败", err);
     res.status(500).json({ error: "Internal Server Error" });
