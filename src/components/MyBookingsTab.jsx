@@ -49,6 +49,7 @@ const handleCheckout = async (booking) => {
         title: booking.service?.title || "服务",
         amount: booking.service?.price || 100,
         userId: booking.userId,
+        slotId: booking.slotId, // ✅ 补上这一行
       }),
     });
 
