@@ -18,6 +18,9 @@ import Layout from './components/Layout';
 import UserProfilePage from "./pages/UserProfilePage";
 import './App.css';
 import TestPage from "./pages/TestPage";
+import PaySuccessPage from "./pages/PaySuccessPage";
+import PayCancelPage from "./pages/PayCancelPage";
+import PaymentReminderModal from "./components/payment/PaymentReminderModal";
 
 const auth = getAuth(app);
 const GOOGLE_MAPS_API_KEY = "AIzaSyDcIEOYVRuvJicRMu6uPloOAk9QrbEk7ww";
@@ -37,11 +40,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={<Layout user={user}><HomePage /></Layout>} />
-      <Route path="/create" element={
-  <Layout user={user}>
-    <CreatePage />
-  </Layout>
-} />  
+      <Route path="/create" element={<Layout user={user}><CreatePage /></Layout>} />
       <Route path="/test" element={<TestPage />} />
       <Route path="/detail/:id" element={<Layout user={user}><DetailPage /></Layout>} />
       <Route path="/login" element={<Layout user={user}><LoginPage /></Layout>} />
@@ -51,6 +50,8 @@ function AppContent() {
       <Route path="/friends" element={<RequireAuth><Layout user={user}><FriendsPage /></Layout></RequireAuth>} />
       <Route path="/map" element={<Layout user={user}><MapPage /></Layout>} />
       <Route path="/user/:uid" element={<UserProfilePage />} />
+      <Route path="/pay/success" element={<PaySuccessPage />} />
+      <Route path="/pay/cancel" element={<PayCancelPage />} />
     </Routes>
   );
 }
@@ -58,7 +59,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-        <AppContent />
+      {/* ✅ 显示待付款提醒弹窗（全局） */}
+      <PaymentReminderModal />
+      <AppContent />
     </Router>
   );
 }

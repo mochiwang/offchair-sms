@@ -21,6 +21,7 @@ import ServiceImages from "../components/ServiceImages";
 import BookingPanel from "../components/BookingPanel";
 import RatingAndComment from "../components/RatingAndComment";
 import ServiceInfo from "../components/ServiceInfo";
+import { handleBookingWithLock } from "../utils/handleBookingWithLock";
 
 
 
@@ -161,67 +162,26 @@ useEffect(() => {
     }
   
     try {
-      // 1. 获取 slot 信息
-      const slotRef = doc(db, "slots", slotId);
-      const slotSnap = await getDoc(slotRef);
-      if (!slotSnap.exists()) {
-        alert("预约失败，时间段不存在！");
-        return;
-      }
-      const slotData = slotSnap.data();
-  
-      // 2. 获取当前用户是否为会员
-      const userRef = doc(db, "users", currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      const isMember = userSnap.exists() && userSnap.data().isMember;
-  
-      // 3. 写入预约记录
-      const appointmentRef = doc(db, "appointments", `${currentUser.uid}_${slotId}`);
-      await setDoc(appointmentRef, {
-        userId: currentUser.uid,
-        serviceId: id,
+      const res = await handleBookingWithLock({
         slotId,
-        startTime: slotData.startTime,
-        endTime: slotData.endTime,
-        createdAt: serverTimestamp(),
-        status: "booked",
+        serviceId: id,
+        userId: currentUser.uid,
+        serviceOwnerId: service.userId,
+        serviceTitle: service.title,
+        servicePhone: service.phoneNumber,
+        isMember: service.isMember, // ⚠️ 如果服务中没有 isMember，可忽略此行
       });
   
-      // 4. 标记该 slot 不可预约
-      await setDoc(
-        slotRef,
-        {
-          available: false,
-          userId: currentUser.uid,
-          bookedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-  
-      // 5. 发送提醒（如果是会员）
-      if (isMember && service.phoneNumber) {
-        await fetch("/api/send-sms", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: service.phoneNumber,
-            message: `有人预约了你的服务《${service.title}》，请及时确认～`,
-          }),
-        });
+      if (res.success) {
+        const chatId = [currentUser.uid, service.userId].sort().join("_");
+        const goToChat = window.confirm("✅ 预约请求已提交，建议尽快前往聊天页面与服务商沟通。是否立即前往？");
+        if (goToChat) {
+          localStorage.setItem("chat_after_booking", chatId);
+          navigate("/"); // 你可以改成 navigate(`/chat`) 等目标页
+        }
       } else {
-        console.log("✅ 非会员，仅邮件提醒或无提醒");
+        alert("❌ " + res.message);
       }
-  
-      // 6. 弹窗提醒跳转聊天
-      const chatId = [currentUser.uid, service.userId].sort().join("_");
-      const goToChat = window.confirm("✅ 预约成功！建议尽快前往聊天页面，与服务商确认见面时间和地点。是否立即前往？");
-  
-      if (goToChat) {
-        localStorage.setItem("chat_after_booking", chatId);
-      }
-  
     } catch (err) {
       console.error("预约失败:", err);
       alert("预约失败，请稍后再试！");

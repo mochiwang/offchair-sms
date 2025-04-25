@@ -3,9 +3,8 @@
 @import "leaflet/dist/leaflet.css";
 html, body, #root {
   width: 100%;
-  min-width: 1024px;
-  margin: 0;
-  padding: 0;
+  min-width: 0;
+  height: 100%;
   box-sizing: border-box;
 }
 
@@ -423,4 +422,63 @@ html, body, #root {
   padding: 0.5rem;
   cursor: pointer;
 }
+
+@media (max-width: 768px) {
+  .navbar { 
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto;
+    padding: 1rem;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-left: 0;
+    padding-right: 0;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .navbar-links a {
+    font-size: 0.95rem;
+  }
+
+  .navbar-logo {
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .my-masonry-grid_column {
+    padding-left: 0 !important;
+  }
+
+  .card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* 地图页：小屏幕下垂直排布 */
+@media (max-width: 768px) {
+  .map-page-container {
+    flex-direction: column;
+  }
+
+  .map-card-column {
+    width: 100% !important;
+    height: auto;
+    border-right: none;
+  }
+
+  .map-area-column {
+    width: 100% !important;
+    height: 400px; /* 给地图一个合理高度 */
+  }
+}
+
 

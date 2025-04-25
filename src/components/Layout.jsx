@@ -3,6 +3,8 @@ import ChatPopup from "./ChatPopup";
 import { getAuth, signOut } from "firebase/auth";
 import app from "../firebase";
 import { useNavigate, useLocation } from "react-router-dom";
+import PaymentReminderModal from "../components/payment/PaymentReminderModal";
+
 
 const auth = getAuth(app);
 
@@ -26,10 +28,11 @@ function Layout({ children, user }) {
     <>
       <NavBar />
       <ChatPopup />
-      {/* ✅ Layout 不再包裹 page-container，页面自己控制容器 */}
       {children}
+      <PaymentReminderModal /> {/* ✅ 放在页面底部 */}
     </>
   );
+
 }
 
 export default Layout;
