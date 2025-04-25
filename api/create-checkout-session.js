@@ -47,6 +47,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("❌ 创建支付会话失败", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).send("Internal Server Error: " + err.message);
+
   }
 }

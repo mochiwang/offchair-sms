@@ -52,11 +52,19 @@ const handleCheckout = async (booking) => {
       }),
     });
 
+    // ✅ 新增这一段
+    if (!res.ok) {
+      const text = await res.text(); // 用 text() 捕获后端返回的错误内容
+      console.error("❌ 接口调用失败：", res.status, text);
+      alert("服务器出错：" + text);
+      return;
+    }
+
+    // ✅ 确认是成功的响应后，再解析 JSON
     const data = await res.json();
-    const stripe = await stripePromise;
 
     if (data.url) {
-      window.location.href = data.url; // ✅ 测试版跳转方式
+      window.location.href = data.url;
     } else {
       alert("❌ 获取支付链接失败");
     }
