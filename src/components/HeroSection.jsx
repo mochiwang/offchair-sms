@@ -72,15 +72,17 @@ function HeroSection() {
           textAlign: "center",
           color: "white",
         }}>
-          <h1 style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            marginBottom: "1.5rem",
-            textShadow: "0 2px 6px rgba(0,0,0,0.5)",
-          }}>
-            Let every passion be visible.<br />
-            Let every act of sharing spark a connection.
-          </h1>
+<h1 style={{
+  fontSize: "2rem",
+  fontWeight: "bold",
+  marginBottom: "2rem",
+  color: "#ffffff", // ✅ 真正的纯白色
+  textShadow: "0 2px 6px rgba(0,0,0,0.6)", // ✅ 柔和黑色阴影，背景亮也能看清
+}}>
+  Let every passion be visible.<br />
+  Let every act of sharing spark a connection.
+</h1>
+
 
           {/* 搜索框 */}
           <div style={{

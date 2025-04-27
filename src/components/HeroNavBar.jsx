@@ -60,21 +60,22 @@ function HeroNavBar() {
         </div>
 
         {/* 右边 三道杠按钮（✅加微调，避免太贴边） */}
-        <div style={{ paddingRight: "0.3rem" }}>
-          <button
-            onClick={() => setShowMenu(true)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "inherit",
-              fontSize: "2rem",
-              cursor: "pointer",
-              padding: "0.3rem 0.5rem", // ✅按钮本身也加点padding，点起来更顺手
-            }}
-          >
-            ☰
-          </button>
-        </div>
+        <div style={{ paddingRight: "1rem" }}>
+  <button
+    onClick={() => setShowMenu(true)}
+    style={{
+      background: "transparent",
+      border: "none",
+      color: "inherit",
+      fontSize: "2rem",
+      cursor: "pointer",
+      padding: "0.3rem 0.8rem", // 按钮本身左右留更多
+    }}
+  >
+    ☰
+  </button>
+</div>
+
       </div>
 
       {/* 三道杠菜单浮出 */}
