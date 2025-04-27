@@ -16,11 +16,12 @@ import MapPage from './pages/MapPage';
 import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
 import UserProfilePage from "./pages/UserProfilePage";
-import './App.css';
 import TestPage from "./pages/TestPage";
 import PaySuccessPage from "./pages/PaySuccessPage";
 import PayCancelPage from "./pages/PayCancelPage";
 import PaymentReminderModal from "./components/payment/PaymentReminderModal";
+
+import './App.css';
 
 const auth = getAuth(app);
 const GOOGLE_MAPS_API_KEY = "AIzaSyDcIEOYVRuvJicRMu6uPloOAk9QrbEk7ww";
@@ -39,11 +40,14 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={<Layout user={user}><HomePage /></Layout>} />
+      {/* 首页不套 Layout，独立 */}
+      <Route path="/" element={<HomePage />} />
+
+      {/* 其他页面继续套 Layout */}
       <Route path="/create" element={<Layout user={user}><CreatePage /></Layout>} />
       <Route path="/test" element={<TestPage />} />
       <Route path="/detail/:id" element={<Layout user={user}><DetailPage /></Layout>} />
-      <Route path="/login" element={<Layout user={user}><LoginPage /></Layout>} />
+      <Route path="/login" element={<LoginPage/>} />
       <Route path="/mypage" element={<RequireAuth><Layout user={user}><MyPage /></Layout></RequireAuth>} />
       <Route path="/chats" element={<RequireAuth><Layout user={user}><ChatListPage /></Layout></RequireAuth>} />
       <Route path="/favorites" element={<RequireAuth><Layout user={user}><FavoritesPage /></Layout></RequireAuth>} />

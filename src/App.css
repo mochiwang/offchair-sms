@@ -482,3 +482,76 @@ html, body, #root {
 }
 
 
+/* HeroNavBar 内部容器 */
+.hero-navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  height: 64px;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* 小屏幕优化 */
+@media (max-width: 768px) {
+  .hero-navbar-inner {
+    padding: 0 1rem;
+  }
+}
+
+/* 黑色透明背景覆盖 */
+.overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* 中央按钮区 带下滑动画 */
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  animation: slideDown 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 按钮样式 */
+.overlay-button {
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+/* hover 特效 */
+.overlay-button:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 出场动画 */
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
