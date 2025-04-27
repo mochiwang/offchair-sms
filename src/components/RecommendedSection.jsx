@@ -27,16 +27,20 @@ function RecommendedSection() {
         }}>
           {/* 服务图片（可选） */}
           <img
-            src="/categories/nail.jpg"
-            alt="Nail Art"
-            style={{
-              width: "120px",
-              height: "120px",
-              objectFit: "cover",
-              borderRadius: "12px",
-              marginBottom: "1.5rem",
-            }}
-          />
+  src="/nailart.jpg"
+  alt="Nail Art"
+  style={{
+    width: "40px",
+    height: "40px",
+    objectFit: "cover",
+    borderRadius: "50%",
+  }}
+  onError={(e) => {
+    e.target.onerror = null; // 防止循环触发
+    e.target.src = "/placeholder.jpg"; // ✅ 替换成默认占位图
+  }}
+/>
+
 
           {/* 服务标题 */}
           <h3 style={{ fontSize: "1.5rem", fontWeight: "600", marginBottom: "1rem" }}>Professional Nail Art</h3>

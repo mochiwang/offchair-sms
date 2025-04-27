@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBox from "./SearchBox";
-import SideMenu from "../components/SideMenu";
 
 const backgroundImages = [
   "/1.jpg",
@@ -29,70 +28,77 @@ function HeroSection() {
   }, [currentBgIndex]);
 
   return (
-    <div style={{ position: "relative", width: "100%", minHeight: "100vh", overflow: "hidden" }}>
-      {/* 上一张背景图 */}
-      {previousBgIndex !== null && (
-        <div
-          style={{
-            backgroundImage: `url('${backgroundImages[previousBgIndex]}')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            top: 0,
-            left: 0,
-            opacity: 1 - bgOpacity,
-            transition: "opacity 1s ease-in-out",
-            backgroundColor: "black",
-            zIndex: 0,
-          }}
-        />
-      )}
-
-      {/* 当前背景图 */}
-      <div
-        style={{
+    <div style={{ width: "100%", overflow: "hidden", backgroundColor: "black" }}>
+      
+      {/* 背景区 */}
+      <div style={{ width: "100%", height: "85vh", position: "relative" }}>
+        
+        {/* 当前背景图 */}
+        <div style={{
           backgroundImage: `url('${backgroundImages[currentBgIndex]}')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          position: "absolute",
           width: "100%",
           height: "100%",
+          position: "absolute",
           top: 0,
           left: 0,
-          opacity: bgOpacity,
-          transition: "opacity 1s ease-in-out",
-          backgroundColor: "black",
           zIndex: 1,
-        }}
-      />
+          transition: "opacity 1s ease-in-out",
+          opacity: bgOpacity,
+        }} />
 
-      {/* 内容部分 */}
-      <div style={{
-        position: "relative",
-        zIndex: 2,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        color: "white",
-        height: "100vh",
-        padding: "6rem 1rem 2rem",
-      }}>
-        <h1 style={{
-          fontSize: "2rem",
-          fontWeight: "bold",
-          marginBottom: "2rem",
-          textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+        {/* 黑色渐变遮罩 */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "linear-gradient(180deg, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.5) 80%)",
+          zIndex: 2,
+        }} />
+
+        {/* 内容层 */}
+        <div style={{
+          position: "relative",
+          zIndex: 3,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          paddingBottom: "2rem",
+          textAlign: "center",
+          color: "white",
         }}>
-          Let every passion be visible.<br />
-          Let every act of sharing spark a connection.
-        </h1>
+          <h1 style={{
+            fontSize: "2rem",
+            fontWeight: "bold",
+            marginBottom: "1.5rem",
+            textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+          }}>
+            Let every passion be visible.<br />
+            Let every act of sharing spark a connection.
+          </h1>
 
-        {/* 搜索浮窗 */}
-        <SearchBox />
+          {/* 搜索框 */}
+          <div style={{
+            width: "85%",
+            maxWidth: "420px",
+          }}>
+            <SearchBox />
+          </div>
+        </div>
+      </div>
+
+      {/* 下方黑色区域补充 */}
+      <div style={{
+        width: "100%",
+        minHeight: "15vh",
+        backgroundColor: "black",
+      }}>
+        {/* 这里可以继续布局首页其他内容 */}
       </div>
     </div>
   );

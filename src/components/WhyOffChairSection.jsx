@@ -22,37 +22,87 @@ function WhyOffChairSection() {
           width: "100%",
           backgroundColor: "black",
           color: "white",
-          padding: "4rem 1rem",
+          padding: "5rem 1rem 6rem", // ✅ 保证外部有左右边距
           textAlign: "center",
+          boxSizing: "border-box",
         }}
       >
-        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-          <h2 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "2rem" }}>
+        {/* 内部包一层，限制宽度 */}
+        <div style={{
+          maxWidth: "800px",
+          width: "100%",
+          margin: "0 auto",
+        }}>
+          {/* 主标题 */}
+          <h2 style={{
+            fontSize: "2.2rem",
+            fontWeight: "bold",
+            marginBottom: "1.5rem",
+            color: "#ffffff",
+          }}>
             Why OffChair
           </h2>
   
-          <p style={{ fontSize: "1rem", color: "#ccc", marginBottom: "3rem", lineHeight: 1.6 }}>
+          {/* 主文案 */}
+          <p style={{
+            fontSize: "1.1rem",
+            color: "#cccccc",
+            marginBottom: "4rem",
+            lineHeight: "1.8",
+            wordBreak: "break-word", // ✅ 单词太长也不会超出
+          }}>
             OffChair is a platform designed to bring passions to life.<br />
             We believe every passion deserves to be seen, shared, and transformed into real-life experiences.
           </p>
   
-          <div style={{ display: "flex", flexDirection: "column", gap: "2rem", textAlign: "left" }}>
+          {/* 三个亮点区 */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "2.5rem",
+            textAlign: "left",
+          }}>
             {reasons.map((item, index) => (
               <div key={index}>
-                <h3 style={{ fontSize: "1.2rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+                <h3 style={{
+                  fontSize: "1.3rem",
+                  fontWeight: "bold",
+                  color: "#ffffff",
+                  marginBottom: "0.6rem",
+                }}>
                   {String(index + 1).padStart(2, "0")} {item.title}
                 </h3>
-                <p style={{ fontSize: "1rem", color: "#ccc" }}>{item.description}</p>
+                <p style={{
+                  fontSize: "1rem",
+                  color: "#cccccc",
+                  lineHeight: "1.7",
+                  wordBreak: "break-word",
+                }}>
+                  {item.description}
+                </p>
               </div>
             ))}
           </div>
   
-          <p style={{ fontSize: "1rem", color: "#ccc", marginTop: "3rem", lineHeight: 1.6 }}>
+          {/* 收尾文案 */}
+          <p style={{
+            fontSize: "1.05rem",
+            color: "#cccccc",
+            marginTop: "4rem",
+            lineHeight: "1.8",
+            wordBreak: "break-word",
+          }}>
             At OffChair, we make it easy for individuals to showcase their talents and for others to find meaningful, inspiring activities.<br />
             Because every passion deserves a stage.
           </p>
   
-          <p style={{ fontSize: "1.2rem", fontWeight: "bold", marginTop: "2rem", color: "#fff" }}>
+          {/* 最后一句总结 */}
+          <p style={{
+            fontSize: "1.4rem",
+            fontWeight: "bold",
+            marginTop: "2.5rem",
+            color: "#ffffff",
+          }}>
             ✨ Let every passion be visible. Let every connection spark new possibilities.
           </p>
         </div>
