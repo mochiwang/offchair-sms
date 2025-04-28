@@ -20,6 +20,8 @@ import TestPage from "./pages/TestPage";
 import PaySuccessPage from "./pages/PaySuccessPage";
 import PayCancelPage from "./pages/PayCancelPage";
 import PaymentReminderModal from "./components/payment/PaymentReminderModal";
+import MyReviewsPage from './pages/MyReviewsPage'; // 顶部记得 import 进来
+import MyBookingsPage from './pages/MyBookingsPage'; // ✅ 顶部记得 import
 
 import './App.css';
 
@@ -50,12 +52,15 @@ function AppContent() {
       <Route path="/login" element={<LoginPage/>} />
       <Route path="/mypage" element={<RequireAuth><Layout user={user}><MyPage /></Layout></RequireAuth>} />
       <Route path="/chats" element={<RequireAuth><Layout user={user}><ChatListPage /></Layout></RequireAuth>} />
-      <Route path="/favorites" element={<RequireAuth><Layout user={user}><FavoritesPage /></Layout></RequireAuth>} />
+      <Route path="/favorites" element={<RequireAuth><FavoritesPage /></RequireAuth>} />
       <Route path="/friends" element={<RequireAuth><Layout user={user}><FriendsPage /></Layout></RequireAuth>} />
+      <Route path="/myreviews" element={<RequireAuth><MyReviewsPage /></RequireAuth>} />
       <Route path="/map" element={<Layout user={user}><MapPage /></Layout>} />
       <Route path="/user/:uid" element={<UserProfilePage />} />
       <Route path="/pay/success" element={<PaySuccessPage />} />
       <Route path="/pay/cancel" element={<PayCancelPage />} />
+
+<Route path="/mybookings" element={<RequireAuth><MyBookingsPage /></RequireAuth>} />
     </Routes>
   );
 }

@@ -54,7 +54,8 @@ function HomePage() {
   return (
     <div style={{ width: "100%", overflowX: "hidden" }}>
       {/* 顶部导航栏 */}
-      <HeroNavBar onMenuOpen={openMenu} />
+      <HeroNavBar onMenuOpen={openMenu} variant="home" />
+
 
       {/* 弹出菜单浮窗 */}
       {menuOpen && (

@@ -1,10 +1,13 @@
-// src/components/HeroNavBar.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import SideMenuOverlay from "./SideMenuOverlay";
 
-function HeroNavBar() {
+/**
+ * HeroNavBar
+ * @param {string} variant "home" | "normal"  - "home"表示首页，透明开始；"normal"表示普通页，黑色背景开始
+ */
+function HeroNavBar({ variant = "normal" }) {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -25,6 +28,18 @@ function HeroNavBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // ✅ 根据 variant 决定背景颜色
+  const backgroundColor = (() => {
+    if (variant === "home") {
+      return isScrolled ? "rgba(0, 0, 0, 0.8)" : "transparent";
+    } else {
+      return "rgba(0, 0, 0, 0.8)";
+    }
+  })();
+
+  // ✅ 滚动后加阴影，增加层次感
+  const boxShadow = isScrolled ? "0 2px 6px rgba(0,0,0,0.2)" : "none";
+
   return (
     <>
       {/* 顶部导航栏 */}
@@ -40,10 +55,10 @@ function HeroNavBar() {
           justifyContent: "space-between",
           alignItems: "center",
           padding: "0 1.5rem",
-          backgroundColor: isScrolled ? "rgba(0, 0, 0, 0.8)" : "transparent",
+          backgroundColor: backgroundColor,
           color: "white",
           transition: "background-color 0.3s ease",
-          boxShadow: isScrolled ? "0 2px 6px rgba(0,0,0,0.2)" : "none",
+          boxShadow: boxShadow,
         }}
       >
         {/* 左边 Logo */}
@@ -59,26 +74,25 @@ function HeroNavBar() {
           OffChair
         </div>
 
-        {/* 右边 三道杠按钮（✅加微调，避免太贴边） */}
+        {/* 右边三道杠按钮 */}
         <div style={{ paddingRight: "1rem" }}>
-  <button
-    onClick={() => setShowMenu(true)}
-    style={{
-      background: "transparent",
-      border: "none",
-      color: "inherit",
-      fontSize: "2rem",
-      cursor: "pointer",
-      padding: "0.3rem 0.8rem", // 按钮本身左右留更多
-    }}
-  >
-    ☰
-  </button>
-</div>
-
+          <button
+            onClick={() => setShowMenu(true)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "inherit",
+              fontSize: "2rem",
+              cursor: "pointer",
+              padding: "0.3rem 0.8rem",
+            }}
+          >
+            ☰
+          </button>
+        </div>
       </div>
 
-      {/* 三道杠菜单浮出 */}
+      {/* 三道杠菜单浮窗 */}
       {showMenu && (
         <SideMenuOverlay currentUser={currentUser} onClose={() => setShowMenu(false)} />
       )}

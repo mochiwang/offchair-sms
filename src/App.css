@@ -555,3 +555,20 @@ html, body, #root {
     transform: translateY(0);
   }
 }
+/* 用于三道杠弹出时按钮一个个淡入 */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInMoveUp 0.5s ease forwards;
+}
+
+@keyframes fadeInMoveUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
