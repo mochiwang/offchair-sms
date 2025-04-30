@@ -1,6 +1,5 @@
 // src/components/RatingAndComment.jsx
 import { useState } from "react";
-
 import { FaHeart } from "react-icons/fa";
 
 function RatingAndComment({
@@ -22,32 +21,33 @@ function RatingAndComment({
   return (
     <div style={{ marginTop: "2rem" }}>
       <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ marginRight: "0.5rem", fontSize: "1rem" }}>为该服务打分：</span>
+        <span style={{ marginRight: "0.5rem", fontSize: "1rem" }}>
+          Leave a Rating:
+        </span>
 
-        {!currentUser && <span style={{ color: "#888" }}>请先登录后评分</span>}
+        {!currentUser && <span style={{ color: "#888" }}>Please log in to rate</span>}
 
         {currentUser && userCompletedSlots.length === 0 && (
-          <span style={{ color: "#888" }}>服务完成后可评分</span>
+          <span style={{ color: "#888" }}>Rating available after completion</span>
         )}
 
         {currentUser && userCompletedSlots.length > 0 && userRatings.length > 0 && (
-          <>
-
-            <span style={{ marginLeft: "0.5rem", color: "#888" }}>你已完成评分，感谢你的反馈！</span>
-          </>
+          <span style={{ marginLeft: "0.5rem", color: "#888" }}>
+            You've already rated. Thank you!
+          </span>
         )}
 
-        {currentUser && userCompletedSlots.length > 0 && userRatings.length === 0 }
+        {currentUser && userCompletedSlots.length > 0 && userRatings.length === 0}
       </div>
 
       <div style={{ marginTop: "2rem" }}>
-        <h4>评论区</h4>
+        <h4>Comments</h4>
         <form onSubmit={handleCommentSubmit} style={{ marginTop: "0.75rem" }}>
           <input
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="写下你的评论..."
+            placeholder="Write your comment..."
             style={{
               width: "100%",
               padding: "8px",
@@ -78,7 +78,7 @@ function RatingAndComment({
                     >
                       @{cmt.displayName}
                     </strong>
-                    ：
+                    :{" "}
                     {cmt.text.split(/(@\w+)/g).map((part, i) =>
                       part.startsWith("@") ? (
                         <span
@@ -136,7 +136,7 @@ function RatingAndComment({
                           cursor: "pointer",
                         }}
                       >
-                        删除
+                        Delete
                       </button>
                     )}
                   </div>
@@ -156,12 +156,12 @@ function RatingAndComment({
                   cursor: "pointer",
                 }}
               >
-                查看更多评论
+                Show more comments
               </button>
             )}
           </>
         ) : (
-          <p style={{ fontSize: "0.9rem", color: "#666" }}>暂无评论</p>
+          <p style={{ fontSize: "0.9rem", color: "#666" }}>No comments yet</p>
         )}
       </div>
     </div>

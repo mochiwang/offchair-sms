@@ -43,13 +43,11 @@ function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         await ensureUserInFirestore(user.uid, user.email);
-        alert("注册成功！");
         setIsRegister(false);
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         await ensureUserInFirestore(user.uid, user.email);
-        alert("登录成功！");
         navigate("/");
       }
     } catch (error) {

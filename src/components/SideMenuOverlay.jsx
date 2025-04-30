@@ -39,6 +39,8 @@ function SideMenuOverlay({ currentUser, onClose }) {
             <MenuButton text="My Reviews" onClick={() => { navigate("/myreviews"); onClose(); }} delay={0.6} />
             <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.7} />
             <MenuButton text="Logout" onClick={handleLogout} delay={0.8} />
+           
+
           </>
         ) : (
           <>

@@ -107,6 +107,12 @@ function CreatePage() {
     return { lat: null, lon: null };
   };
 
+  const generateKeywords = (title, description, tags, zipCode) => {
+    const allText = `${title} ${description} ${tags.join(' ')} ${zipCode}`.toLowerCase();
+    const words = allText.match(/\b\w{2,}\b/g);
+    return Array.from(new Set(words));
+  };
+
   const generateTimeSlots = (date, startTime, endTime, duration, serviceId) => {
     const slots = [];
     let start = new Date(`${date}T${startTime}`);
@@ -126,6 +132,7 @@ function CreatePage() {
       return;
     }
     const geo = await fetchCoordinates(form.zipCode);
+    const keywords = generateKeywords(form.title, form.description, form.tags, form.zipCode);
     const newService = {
       title: form.title,
       description: form.description,
@@ -135,6 +142,7 @@ function CreatePage() {
       longitude: geo.lon,
       images: form.images,
       tags: form.tags,
+      keywords: keywords,
       createdAt: serverTimestamp(),
       userId: user.uid,
     };

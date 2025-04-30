@@ -22,6 +22,8 @@ import PayCancelPage from "./pages/PayCancelPage";
 import PaymentReminderModal from "./components/payment/PaymentReminderModal";
 import MyReviewsPage from './pages/MyReviewsPage'; // 顶部记得 import 进来
 import MyBookingsPage from './pages/MyBookingsPage'; // ✅ 顶部记得 import
+import MyServicesPage from './pages/MyServices';
+import SearchResults from "./pages/SearchResults";
 
 import './App.css';
 
@@ -46,7 +48,8 @@ function AppContent() {
       <Route path="/" element={<HomePage />} />
 
       {/* 其他页面继续套 Layout */}
-      <Route path="/create" element={<Layout user={user}><CreatePage /></Layout>} />
+      <Route path="/create" element={<RequireAuth><Layout user={user} variant="normal"><CreatePage /></Layout></RequireAuth>} />
+
       <Route path="/test" element={<TestPage />} />
       <Route path="/detail/:id" element={<Layout user={user}><DetailPage /></Layout>} />
       <Route path="/login" element={<LoginPage/>} />
@@ -59,6 +62,10 @@ function AppContent() {
       <Route path="/user/:uid" element={<UserProfilePage />} />
       <Route path="/pay/success" element={<PaySuccessPage />} />
       <Route path="/pay/cancel" element={<PayCancelPage />} />
+      <Route path="/myservices" element={<RequireAuth><MyServicesPage /></RequireAuth>} />
+      <Route path="/search" element={<Layout variant="normal"><SearchResults /></Layout>} />
+
+
 
 <Route path="/mybookings" element={<RequireAuth><MyBookingsPage /></RequireAuth>} />
     </Routes>

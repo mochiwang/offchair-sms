@@ -37,7 +37,7 @@ function MyBookingsPage() {
 
   useEffect(() => {
     cancelExpiredUnpaidAppointments().then(res => {
-      console.log(`✅ 自动取消了 ${res.cancelled} 条超时未付款的预约`);
+      console.log(`✅ Automatically canceled ${res.cancelled} expired unpaid appointments.`);
     });
   }, []);
 
@@ -54,7 +54,7 @@ function MyBookingsPage() {
         const service = serviceSnap.exists() ? serviceSnap.data() : null;
 
         const guestSnap = await getDoc(doc(db, "users", data.userId));
-        const guest = guestSnap.exists() ? guestSnap.data() : { displayName: "匿名用户" };
+        const guest = guestSnap.exists() ? guestSnap.data() : { displayName: "Anonymous" };
 
         return {
           ...data,
@@ -90,7 +90,7 @@ function MyBookingsPage() {
     await deleteDoc(doc(db, "appointments", bookingId));
     await setDoc(doc(db, "slots", slotId), { available: true, userId: null, locked: false }, { merge: true });
     setAppointments((prev) => prev.filter((b) => b.id !== bookingId));
-    alert("已取消预约");
+    alert("Booking canceled.");
   };
 
   const handleConfirm = async (bookingId, userId) => {
@@ -109,7 +109,7 @@ function MyBookingsPage() {
         )
       );
 
-      alert("✅ 已确认预约，已提醒客人付款");
+      alert("✅ Appointment confirmed. Guest has been reminded to pay.");
 
       const userRef = doc(db, "users", userId);
       const userSnap = await getDoc(userRef);
@@ -121,16 +121,16 @@ function MyBookingsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: user.phoneNumber,
-            message: `你预约的服务已被商家确认，请尽快付款以完成预约～`,
+            message: `Your appointment has been confirmed. Please complete the payment.`,
           }),
         });
-        console.log("📩 短信提醒已发送给客人");
+        console.log("📩 SMS reminder sent to guest.");
       } else {
-        console.log("📭 非会员或无手机号，不发送短信");
+        console.log("📭 Non-member or no phone number, SMS not sent.");
       }
     } catch (err) {
-      console.error("❌ 确认预约失败：", err);
-      alert("❌ 确认失败，请稍后重试");
+      console.error("❌ Failed to confirm appointment:", err);
+      alert("❌ Confirmation failed. Please try again later.");
     }
   };
 
@@ -141,7 +141,7 @@ function MyBookingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId: booking.serviceId,
-          title: booking.service?.title || "服务",
+          title: booking.service?.title || "Service",
           amount: booking.service?.price || 100,
           userId: booking.userId,
           slotId: booking.slotId,
@@ -150,8 +150,8 @@ function MyBookingsPage() {
 
       if (!res.ok) {
         const text = await res.text();
-        console.error("❌ 接口调用失败：", res.status, text);
-        alert("服务器出错：" + text);
+        console.error("❌ API request failed:", res.status, text);
+        alert("Server error: " + text);
         return;
       }
 
@@ -160,11 +160,11 @@ function MyBookingsPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert("❌ 获取支付链接失败");
+        alert("❌ Failed to get payment link.");
       }
     } catch (error) {
-      console.error("跳转 Stripe 付款失败:", error);
-      alert("❌ 付款失败，请稍后重试");
+      console.error("Stripe checkout failed:", error);
+      alert("❌ Payment failed. Please try again later.");
     }
   };
 
@@ -174,10 +174,10 @@ function MyBookingsPage() {
     <>
       <HeroNavBar variant="normal" />
       <div style={{ padding: "6rem 1rem 2rem", maxWidth: "600px", margin: "0 auto" }}>
-        <h2 style={{ textAlign: "center", marginBottom: "2rem" }}>我的预约</h2>
+        <h2 style={{ textAlign: "center", marginBottom: "2rem" }}>My Bookings</h2>
 
         {appointments.length === 0 ? (
-          <EmptyState message="你还没有任何即将到来的预约。" icon="📅" />
+          <EmptyState message="You don't have any upcoming bookings yet." icon="📅" />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
             {appointments.map((b) => {
@@ -199,13 +199,13 @@ function MyBookingsPage() {
                   }}
                 >
                   <h3 style={{ margin: 0, fontSize: "1.2rem", color: "#111" }}>
-                    {b.service?.title || "未知服务"}
+                    {b.service?.title || "Unknown Service"}
                   </h3>
                   <p style={{ margin: "6px 0", color: "#555" }}>
                     🕒 {new Date(b.startTime.seconds * 1000).toLocaleString()}
                   </p>
                   <p style={{ margin: "6px 0", color: "#666" }}>
-                    状态：{b.status === "confirmed" ? "✅ 已确认" : "⏳ 待商家确认"}
+                    Status: {b.status === "confirmed" ? "✅ Confirmed" : "⏳ Awaiting confirmation"}
                   </p>
 
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.75rem" }}>
@@ -213,14 +213,14 @@ function MyBookingsPage() {
                       <>
                         {b.status === "confirmed" && !b.paid && (
                           <button onClick={() => handleCheckout(b)} style={buttonStyle("#fffbea", "#facc15", "#b45309")}>
-                            去付款 💳
+                            Pay Now 💳
                           </button>
                         )}
                         <button onClick={() => navigate(`/detail/${b.serviceId}`)} style={buttonStyle("#f4f4f5", "#ccc")}>
-                          查看服务
+                          View Service
                         </button>
                         <button onClick={() => handleCancel(b.id, b.slotId)} style={buttonStyle("#ffecec", "#d33", "#d33")}>
-                          取消预约
+                          Cancel Booking
                         </button>
                       </>
                     )}
@@ -229,15 +229,15 @@ function MyBookingsPage() {
                       <>
                         {b.status === "booked" ? (
                           <button onClick={() => handleConfirm(b.id, b.userId)} style={buttonStyle("#ff2d55", "#ff2d55", "#fff")}>
-                            确认预约
+                            Confirm Booking
                           </button>
                         ) : (
                           <button disabled style={buttonStyle("#f4f4f5", "#ccc", "#aaa")}>
-                            已确认
+                            Confirmed
                           </button>
                         )}
                         <button onClick={() => navigate(`/user/${b.userId}`)} style={buttonStyle("#f4f4f5", "#ccc")}>
-                          查看客人
+                          View Guest
                         </button>
                       </>
                     )}

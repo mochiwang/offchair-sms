@@ -1,5 +1,3 @@
-// src/pages/HomePage.jsx
-
 import { useState, useEffect } from "react";
 import HeroNavBar from "../components/HeroNavBar";
 import HeroSection from "../components/HeroSection";
@@ -55,7 +53,6 @@ function HomePage() {
     <div style={{ width: "100%", overflowX: "hidden" }}>
       {/* 顶部导航栏 */}
       <HeroNavBar onMenuOpen={openMenu} variant="home" />
-
 
       {/* 弹出菜单浮窗 */}
       {menuOpen && (
@@ -125,7 +122,7 @@ function HomePage() {
         </div>
       )}
 
-      {/* 主体内容 */}
+      {/* 主体内容结构（保持你原来喜欢的三段式） */}
       <HeroSection />
       <RecommendedSection />
       <CategorySection />

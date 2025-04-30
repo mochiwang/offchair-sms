@@ -3,10 +3,9 @@ import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
-function CalendarWithSlots({ slots = [], onBook }) {
+function CalendarWithSlots({ slots = [], onBook, selectedSlotId }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // 筛选当前选中的日期对应的 slot（精确到年月日）
   const filteredSlots = slots.filter((slot) => {
     const slotDate = new Date(slot.startTime.seconds * 1000);
     return (
@@ -30,41 +29,39 @@ function CalendarWithSlots({ slots = [], onBook }) {
 
   return (
     <div style={{ marginTop: "2rem" }}>
-      <h3>📅 选择日期：</h3>
+      <h3>📅 Select a Date:</h3>
       <Calendar
-        calendarType="gregory" 
-  onChange={setSelectedDate}
-  value={selectedDate}
-
-  tileClassName={({ date }) => {
-    const hasSlot = slots.some((slot) => {
-      const slotDate = new Date(slot.startTime.seconds * 1000);
-      return (
-        slotDate.getFullYear() === date.getFullYear() &&
-        slotDate.getMonth() === date.getMonth() &&
-        slotDate.getDate() === date.getDate()
-      );
-    });
-    return hasSlot ? "has-slot" : null; // 👈 有 slot 的日期高亮
-  }}
-  tileDisabled={({ date, view }) => {
-    if (view !== "month") return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // 标准化为当天零点
-    return date < today;
-  }}
-/>
-
+        calendarType="gregory"
+        onChange={setSelectedDate}
+        value={selectedDate}
+        tileClassName={({ date }) => {
+          const hasSlot = slots.some((slot) => {
+            const slotDate = new Date(slot.startTime.seconds * 1000);
+            return (
+              slotDate.getFullYear() === date.getFullYear() &&
+              slotDate.getMonth() === date.getMonth() &&
+              slotDate.getDate() === date.getDate()
+            );
+          });
+          return hasSlot ? "has-slot" : null;
+        }}
+        tileDisabled={({ date, view }) => {
+          if (view !== "month") return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return date < today;
+        }}
+      />
 
       <div style={{ marginTop: "1.5rem" }}>
-        <h4>🕓 可预约时间：</h4>
+        <h4>🕓 Available Slots:</h4>
         {filteredSlots.length === 0 ? (
-          <p style={{ color: "#999" }}>该日暂无可预约时间</p>
+          <p style={{ color: "#999" }}>No available slots for this date.</p>
         ) : (
           filteredSlots.map((slot) => (
             <div
               key={slot.id}
+              onClick={() => onBook(slot)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -73,22 +70,18 @@ function CalendarWithSlots({ slots = [], onBook }) {
                 borderRadius: "8px",
                 padding: "0.75rem 1rem",
                 marginBottom: "0.5rem",
+                backgroundColor:
+                  selectedSlotId === slot.id ? "#f0f8ff" : "white",
+                cursor: "pointer",
+                transition: "background-color 0.25s ease",
               }}
             >
               <span>{formatTimeRange(slot.startTime, slot.endTime)}</span>
-              <button
-                onClick={() => onBook(slot.id)}
-                style={{
-                  padding: "6px 12px",
-                  backgroundColor: "#5c4db1",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                预约
-              </button>
+              {selectedSlotId === slot.id && (
+                <span style={{ color: "#5c4db1", fontWeight: "bold" }}>
+                  Selected
+                </span>
+              )}
             </div>
           ))
         )}

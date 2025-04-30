@@ -32,6 +32,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 function DetailPage() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [slots, setSlots] = useState([]);
   const { id } = useParams();
   const [service, setService] = useState(null);
@@ -45,6 +46,15 @@ function DetailPage() {
 const [comments, setComments] = useState([]);
 const [displayName, setDisplayName] = useState("匿名");
 const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
+
+
+
+
+useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth < 768);
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
 
 
@@ -404,6 +414,7 @@ useEffect(() => {
         margin: "0 auto",
         padding: "2rem",
         paddingTop: "80px",
+        paddingBottom: isMobile ? "6rem" : "2rem", // ✅ 给底部按钮留空间
       }}
     >
       <ServiceHeader
@@ -418,16 +429,16 @@ useEffect(() => {
   
       <ServiceImages images={service.images} />
   
-      {/* ✅ 两列布局：左边内容 + 右边预约 */}
       <div
         style={{
           display: "flex",
+          flexDirection: isMobile ? "column" : "row",
           justifyContent: "space-between",
           alignItems: "flex-start",
           gap: "2rem",
         }}
       >
-        {/* 左侧：详情、评分、评论 */}
+        {/* 左侧内容 */}
         <div style={{ flex: 1 }}>
           <ServiceInfo
             description={service.description}
@@ -436,12 +447,7 @@ useEffect(() => {
             tags={service.tags}
             createdAt={service.createdAt}
           />
-  
-          {service.createdAt?.toDate && (
-            <p style={{ fontSize: "0.9rem", color: "#888" }}>
-              发布时间：{service.createdAt.toDate().toLocaleString()}
-            </p>
-          )}
+
   
           <RatingAndComment
             currentUser={currentUser}
@@ -461,18 +467,46 @@ useEffect(() => {
           />
         </div>
   
-        {/* 右侧：预约功能 BookingPanel */}
-        <div style={{ width: "360px" }}>
+        {/* 右侧预约卡片：仅桌面显示 */}
+        {!isMobile && (
+          <div style={{ width: "360px" }}>
+            <BookingPanel
+              currentUser={currentUser}
+              service={service}
+              slots={slots}
+              handleBooking={handleBooking}
+            />
+          </div>
+        )}
+      </div>
+  
+      {/* 移动端底部预约按钮栏 */}
+      {isMobile && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            backgroundColor: "#fff",
+            padding: "1rem",
+            borderTop: "1px solid #ddd",
+            boxShadow: "0 -2px 6px rgba(0,0,0,0.08)",
+          }}
+        >
           <BookingPanel
             currentUser={currentUser}
             service={service}
             slots={slots}
             handleBooking={handleBooking}
+            isCompact // 你可以在 BookingPanel 中用此标记来简化 UI
           />
         </div>
-      </div>
+      )}
     </div>
   );
+  
 }
 
 export default DetailPage;  
