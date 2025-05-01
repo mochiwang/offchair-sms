@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 import app from './firebase';
 import HomePage from './pages/HomePage';
@@ -20,16 +20,14 @@ import TestPage from "./pages/TestPage";
 import PaySuccessPage from "./pages/PaySuccessPage";
 import PayCancelPage from "./pages/PayCancelPage";
 import PaymentReminderModal from "./components/payment/PaymentReminderModal";
-import MyReviewsPage from './pages/MyReviewsPage'; // 顶部记得 import 进来
-import MyBookingsPage from './pages/MyBookingsPage'; // ✅ 顶部记得 import
+import MyReviewsPage from './pages/MyReviewsPage';
+import MyBookingsPage from './pages/MyBookingsPage';
 import MyServicesPage from './pages/MyServices';
 import SearchResults from "./pages/SearchResults";
 
 import './App.css';
 
 const auth = getAuth(app);
-const GOOGLE_MAPS_API_KEY = "AIzaSyDcIEOYVRuvJicRMu6uPloOAk9QrbEk7ww";
-const LIBRARIES = ["places"]; // ✅ 避免多次传入新数组
 
 function AppContent() {
   const [user, setUser] = useState(null);
@@ -42,14 +40,44 @@ function AppContent() {
     return () => unsubscribe();
   }, []);
 
+  // ✅ 自动登出逻辑
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    let lastActivity = Date.now();
+
+    const updateActivity = () => {
+      lastActivity = Date.now();
+    };
+
+    const checkInactivity = setInterval(() => {
+      const now = Date.now();
+      const THIRTY_MINUTES = 30 * 60 * 1000;
+      if (now - lastActivity > THIRTY_MINUTES) {
+        clearInterval(checkInactivity);
+        signOut(auth).then(() => {
+          alert("You’ve been logged out due to 30 minutes of inactivity.");
+          navigate("/login");
+        });
+      }
+    }, 60 * 1000); // 每分钟检查一次
+
+    window.addEventListener("mousemove", updateActivity);
+    window.addEventListener("keydown", updateActivity);
+    window.addEventListener("click", updateActivity);
+
+    return () => {
+      clearInterval(checkInactivity);
+      window.removeEventListener("mousemove", updateActivity);
+      window.removeEventListener("keydown", updateActivity);
+      window.removeEventListener("click", updateActivity);
+    };
+  }, [auth.currentUser, navigate]);
+
   return (
     <Routes>
-      {/* 首页不套 Layout，独立 */}
       <Route path="/" element={<HomePage />} />
-
-      {/* 其他页面继续套 Layout */}
       <Route path="/create" element={<RequireAuth><Layout user={user} variant="normal"><CreatePage /></Layout></RequireAuth>} />
-
       <Route path="/test" element={<TestPage />} />
       <Route path="/detail/:id" element={<Layout user={user}><DetailPage /></Layout>} />
       <Route path="/login" element={<LoginPage/>} />
@@ -64,10 +92,7 @@ function AppContent() {
       <Route path="/pay/cancel" element={<PayCancelPage />} />
       <Route path="/myservices" element={<RequireAuth><MyServicesPage /></RequireAuth>} />
       <Route path="/search" element={<Layout variant="normal"><SearchResults /></Layout>} />
-
-
-
-<Route path="/mybookings" element={<RequireAuth><MyBookingsPage /></RequireAuth>} />
+      <Route path="/mybookings" element={<RequireAuth><MyBookingsPage /></RequireAuth>} />
     </Routes>
   );
 }
@@ -75,7 +100,6 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      {/* ✅ 显示待付款提醒弹窗（全局） */}
       <PaymentReminderModal />
       <AppContent />
     </Router>
