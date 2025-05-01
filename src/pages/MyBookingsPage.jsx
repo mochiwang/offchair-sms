@@ -41,67 +41,83 @@ function MyBookingsPage() {
       console.log(`✅ Automatically canceled ${res.cancelled} expired unpaid appointments.`);
     });
   }, []);
-
   const fetchAppointments = async () => {
     if (!currentUser) return;
-
-    const guestQ = query(
-      collection(db, "appointments"),
-      where("userId", "==", currentUser.uid)
-    );
-    
-    const merchantQ = query(
-      collection(db, "appointments"),
-      where("serviceOwnerId", "==", currentUser.uid)
-    );
-    
-    const [guestSnap, merchantSnap] = await Promise.all([
-      getDocs(guestQ),
-      getDocs(merchantQ),
-    ]);
-    
-    const snap = [...guestSnap.docs, ...merchantSnap.docs];
-    const seen = new Set();
-    const deduped = snap.filter(d => {
-      if (seen.has(d.id)) return false;
-      seen.add(d.id);
-      return true;
-    });
-    
-
-    const list = await Promise.all(
-      snap.docs.map(async (d) => {
-        const data = d.data();
-        const serviceSnap = await getDoc(doc(db, "services", data.serviceId));
-        const service = serviceSnap.exists() ? serviceSnap.data() : null;
-
-        const guestSnap = await getDoc(doc(db, "users", data.userId));
-        const guest = guestSnap.exists() ? guestSnap.data() : { displayName: "Anonymous" };
-
-        return {
-          ...data,
-          id: d.id,
-          service,
-          guest,
-          serviceOwnerId: service?.userId || "",
-        };
-      })
-    );
-
-    const now = Date.now();
-    const future = list.filter((b) => {
-      const end = b.endTime?.seconds * 1000;
-      return end && end > now;
-    });
-
-    const myAppointments = future.filter(
-      (b) =>
-        b.userId === currentUser.uid || b.serviceOwnerId === currentUser.uid
-    );
-
-    setAppointments(myAppointments);
-    setLoading(false);
+  
+    try {
+      // 🔍 查询作为客人发起的预约
+      const guestQ = query(
+        collection(db, "appointments"),
+        where("userId", "==", currentUser.uid)
+      );
+  
+      // 🔍 查询作为商家收到的预约
+      const merchantQ = query(
+        collection(db, "appointments"),
+        where("serviceOwnerId", "==", currentUser.uid)
+      );
+  
+      // 🔄 并发获取两个查询结果
+      const [guestSnap, merchantSnap] = await Promise.all([
+        getDocs(guestQ),
+        getDocs(merchantQ),
+      ]);
+  
+      // 🧹 合并并去重（防止同一条记录出现两次）
+      const snapDocs = [
+        ...(guestSnap?.docs || []),
+        ...(merchantSnap?.docs || []),
+      ];
+  
+      const seen = new Set();
+      const deduped = snapDocs.filter((d) => {
+        if (seen.has(d.id)) return false;
+        seen.add(d.id);
+        return true;
+      });
+  
+      // 📦 补全每条预约的 service 与 user 信息
+      const list = await Promise.all(
+        deduped.map(async (d) => {
+          const data = d.data();
+          const serviceSnap = await getDoc(doc(db, "services", data.serviceId));
+          const service = serviceSnap.exists() ? serviceSnap.data() : null;
+  
+          const guestSnap = await getDoc(doc(db, "users", data.userId));
+          const guest = guestSnap.exists() ? guestSnap.data() : { displayName: "Anonymous" };
+  
+          return {
+            ...data,
+            id: d.id,
+            service,
+            guest,
+            serviceOwnerId: service?.userId || "",
+          };
+        })
+      );
+  
+      // 🕒 只保留未来的预约
+      const now = Date.now();
+      const future = list.filter((b) => {
+        const end = b.endTime?.seconds * 1000;
+        return end && end > now;
+      });
+  
+      // 🔐 当前用户为客人或商家的预约
+      const myAppointments = future.filter(
+        (b) =>
+          b.userId === currentUser.uid || b.serviceOwnerId === currentUser.uid
+      );
+  
+      setAppointments(myAppointments);
+      setLoading(false);
+    } catch (err) {
+      console.error("❌ Failed to fetch appointments:", err);
+      alert("❌ Failed to load bookings. Please try again.");
+      setLoading(false);
+    }
   };
+  
 
   useEffect(() => {
     fetchAppointments();
