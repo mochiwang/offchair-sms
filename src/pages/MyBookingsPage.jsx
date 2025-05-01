@@ -44,8 +44,29 @@ function MyBookingsPage() {
   const fetchAppointments = async () => {
     if (!currentUser) return;
 
-    const q = query(collection(db, "appointments"));
-    const snap = await getDocs(q);
+    const guestQ = query(
+      collection(db, "appointments"),
+      where("userId", "==", currentUser.uid)
+    );
+    
+    const merchantQ = query(
+      collection(db, "appointments"),
+      where("serviceOwnerId", "==", currentUser.uid)
+    );
+    
+    const [guestSnap, merchantSnap] = await Promise.all([
+      getDocs(guestQ),
+      getDocs(merchantQ),
+    ]);
+    
+    const snap = [...guestSnap.docs, ...merchantSnap.docs];
+    const seen = new Set();
+    const deduped = snap.filter(d => {
+      if (seen.has(d.id)) return false;
+      seen.add(d.id);
+      return true;
+    });
+    
 
     const list = await Promise.all(
       snap.docs.map(async (d) => {
