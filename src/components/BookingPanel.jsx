@@ -4,13 +4,19 @@ import { useNavigate } from "react-router-dom";
 import CalendarWithSlots from "./CalendarWithSlots";
 import { handleBookingWithLock } from "../utils/handleBookingWithLock";
 
-function BookingPanel({ currentUser, service, slots, isCompact = false }) {
+function BookingPanel({
+  currentUser,
+  service,
+  slots,
+  isCompact = false,
+  onBookingSuccess,
+  onClose, // ✅ 新增关闭回调
+}) {
   const navigate = useNavigate();
+  const [showCalendar, setShowCalendar] = useState(isCompact ? true : false);
 
-  const [showCalendar, setShowCalendar] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
 
-  // ✅ Not logged in: prompt login
   if (!currentUser) {
     return (
       <div style={panelStyle}>
@@ -23,7 +29,6 @@ function BookingPanel({ currentUser, service, slots, isCompact = false }) {
     );
   }
 
-  // ✅ Hide for owner or no slots available
   if (currentUser.uid === service.userId || slots.length === 0) {
     return null;
   }
@@ -37,6 +42,9 @@ function BookingPanel({ currentUser, service, slots, isCompact = false }) {
 
     if (res.success) {
       alert("✅ Booking request submitted. Please wait for confirmation.");
+      if (typeof onBookingSuccess === "function") {
+        onBookingSuccess();
+      }
     } else {
       alert("❌ " + res.message);
     }
@@ -50,22 +58,44 @@ function BookingPanel({ currentUser, service, slots, isCompact = false }) {
     handleBook(selectedSlotId);
   };
 
-  // ✅ Mobile: Compact Mode
   if (isCompact) {
+    console.log("🧪 BookingPanel mounted, onClose =", onClose);
+
     return (
       <div
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          width: "100%",
+          position: "relative", // ✅ 使关闭按钮能定位
           padding: "1rem",
+          paddingTop: "3rem",
           backgroundColor: "#fff",
-          borderTop: "1px solid #ddd",
-          boxShadow: "0 -2px 6px rgba(0,0,0,0.1)",
-          zIndex: 1000,
+          minHeight: "100%",
         }}
       >
+        {/* ✅ 黑色关闭按钮 */}
+        {onClose && (
+  <button
+    onClick={() => {
+      console.log("✅ onClose called"); // 🔍 会在点击时打印
+      onClose(); // 🔐 正常调用
+    }}
+    style={{
+      position: "absolute",
+      top: "16px",
+      right: "16px",
+      fontSize: "1.5rem",
+      background: "transparent",
+      border: "none",
+      color: "#111",
+      cursor: "pointer",
+      zIndex: 10,
+    }}
+    aria-label="Close"
+  >
+    ×
+  </button>
+)}
+
+
         {!showCalendar ? (
           <button
             onClick={() => setShowCalendar(true)}
@@ -112,7 +142,6 @@ function BookingPanel({ currentUser, service, slots, isCompact = false }) {
     );
   }
 
-  // ✅ Desktop: Full Panel
   return (
     <div style={panelStyle}>
       <h3 style={titleStyle}>Available Time Slots</h3>

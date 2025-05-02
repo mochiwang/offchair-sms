@@ -46,6 +46,8 @@ function DetailPage() {
 const [comments, setComments] = useState([]);
 const [displayName, setDisplayName] = useState("匿名");
 const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
+const [showBooking, setShowBooking] = useState(true);
+
 
 
 
@@ -408,105 +410,152 @@ useEffect(() => {
 
   return (
     <div
-      className="page-container"
+    className="page-container"
+    style={{
+      maxWidth: "1277px",
+      margin: "0 auto",
+      padding: "2rem",
+      paddingTop: "80px",
+      paddingBottom: isMobile ? "6rem" : "2rem", // ✅ 给底部按钮留空间
+    }}
+  >
+    <ServiceHeader
+      title={service.title}
+      isFav={isFav}
+      toggleFavorite={toggleFavorite}
+      sellerName={service.sellerName}
+      sellerAvatar={service.sellerAvatar}
+      sellerId={service.userId}
+      rating={service.rating}
+    />
+
+    <ServiceImages images={service.images} />
+
+    <div
       style={{
-        maxWidth: "1277px",
-        margin: "0 auto",
-        padding: "2rem",
-        paddingTop: "80px",
-        paddingBottom: isMobile ? "6rem" : "2rem", // ✅ 给底部按钮留空间
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: "2rem",
       }}
     >
-      <ServiceHeader
-        title={service.title}
-        isFav={isFav}
-        toggleFavorite={toggleFavorite}
-        sellerName={service.sellerName}
-        sellerAvatar={service.sellerAvatar}
-        sellerId={service.userId}
-        rating={service.rating}
-      />
-  
-      <ServiceImages images={service.images} />
-  
-      <div
-        style={{
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "2rem",
-        }}
-      >
-        {/* 左侧内容 */}
-        <div style={{ flex: 1 }}>
-          <ServiceInfo
-            description={service.description}
-            price={service.price}
-            location={service.location}
-            tags={service.tags}
-            createdAt={service.createdAt}
-          />
+      {/* 左侧内容 */}
+      <div style={{ flex: 1 }}>
+        <ServiceInfo
+          description={service.description}
+          price={service.price}
+          location={service.location}
+          tags={service.tags}
+          createdAt={service.createdAt}
+        />
 
-  
-          <RatingAndComment
-            currentUser={currentUser}
-            userCompletedSlots={userCompletedSlots}
-            userRatings={userRatings}
-            handleRatingChange={handleRatingChange}
-            commentText={commentText}
-            setCommentText={setCommentText}
-            comments={comments}
-            handleCommentSubmit={handleCommentSubmit}
-            handleCommentLike={handleCommentLike}
-            handleCommentDelete={handleCommentDelete}
-            visibleComments={visibleComments}
-            setVisibleComments={setVisibleComments}
-            displayName={displayName}
-            navigate={navigate}
-          />
-        </div>
-  
-        {/* 右侧预约卡片：仅桌面显示 */}
-        {!isMobile && (
-          <div style={{ width: "360px" }}>
-            <BookingPanel
-              currentUser={currentUser}
-              service={service}
-              slots={slots}
-              handleBooking={handleBooking}
-            />
-          </div>
-        )}
+
+        <RatingAndComment
+          currentUser={currentUser}
+          userCompletedSlots={userCompletedSlots}
+          userRatings={userRatings}
+          handleRatingChange={handleRatingChange}
+          commentText={commentText}
+          setCommentText={setCommentText}
+          comments={comments}
+          handleCommentSubmit={handleCommentSubmit}
+          handleCommentLike={handleCommentLike}
+          handleCommentDelete={handleCommentDelete}
+          visibleComments={visibleComments}
+          setVisibleComments={setVisibleComments}
+          displayName={displayName}
+          navigate={navigate}
+        />
       </div>
-  
-      {/* 移动端底部预约按钮栏 */}
-      {isMobile && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-            backgroundColor: "#fff",
-            padding: "1rem",
-            borderTop: "1px solid #ddd",
-            boxShadow: "0 -2px 6px rgba(0,0,0,0.08)",
-          }}
-        >
+
+      {/* 右侧预约卡片：仅桌面显示 */}
+      {!isMobile && (
+        <div style={{ width: "360px" }}>
           <BookingPanel
             currentUser={currentUser}
             service={service}
             slots={slots}
             handleBooking={handleBooking}
-            isCompact // 你可以在 BookingPanel 中用此标记来简化 UI
           />
         </div>
       )}
     </div>
-  );
-  
-}
 
-export default DetailPage;  
+    {/* 移动端底部预约按钮栏 */}
+    {isMobile && (
+  <>
+    {/* 底部按钮 */}
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        backgroundColor: "#fff",
+        padding: "1rem",
+        borderTop: "1px solid #ddd",
+        boxShadow: "0 -2px 6px rgba(0,0,0,0.08)",
+      }}
+    >
+      <button
+        onClick={() => setShowBooking(true)}
+        style={{
+          width: "100%",
+          padding: "1rem",
+          backgroundColor: "#ff5858",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "1.1rem",
+          fontWeight: "bold",
+          cursor: "pointer",
+        }}
+      >
+        Book Now 💬
+      </button>
+    </div>
+
+    {/* ✅ 只有 showBooking 为 true 时显示浮窗 */}
+    {showBooking && (
+      <div
+  style={{
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    width: "100vw",
+    height: "90vh",
+    backgroundColor: "#fff",
+    zIndex: 2000,
+    overflowY: "auto",
+    borderTopLeftRadius: "20px",
+    borderTopRightRadius: "20px",
+    boxShadow: "0 -4px 16px rgba(0,0,0,0.1)",
+    padding: "1.5rem",
+    boxSizing: "border-box",
+  }}
+>
+  <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+    <BookingPanel
+      currentUser={currentUser}
+      service={service}
+      slots={slots}
+      handleBooking={handleBooking}
+      isCompact
+      onBookingSuccess={() => setShowBooking(false)}
+      onClose={() => setShowBooking(false)}
+    />
+  </div>
+</div>
+
+    )}
+  </>
+)}
+
+  </div>
+);
+
+}  
+
+export default DetailPage;

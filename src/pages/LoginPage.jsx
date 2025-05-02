@@ -25,15 +25,12 @@ function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const navigate = useNavigate();
 
+
+
   const ensureUserInFirestore = async (uid, email) => {
     const userRef = doc(db, "users", uid);
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) {
-      await setDoc(userRef, {
-        email: email,
-        createdAt: serverTimestamp(),
-      });
-    }
+    await setDoc(userRef, { email, createdAt: serverTimestamp() }, { merge: true });
+    
   };
 
   const handleSubmit = async (e) => {
@@ -43,6 +40,12 @@ function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         await ensureUserInFirestore(user.uid, user.email);
+
+
+        alert("✅ 登录成功，请点击确认继续");
+        navigate("/mybookings");
+
+
         setIsRegister(false);
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);

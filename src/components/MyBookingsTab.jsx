@@ -5,6 +5,7 @@ import {
   collection,
   query,
   getDocs,
+  where,
   doc,
   getDoc,
   deleteDoc,
@@ -17,6 +18,8 @@ import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { cancelExpiredUnpaidAppointments } from "../utils/cancelExpiredUnpaidAppointments";
+import { onAuthStateChanged } from "firebase/auth";
+
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -24,7 +27,14 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 function MyBookingsTab() {
   const [appointments, setAppointments] = useState([]);
-  const currentUser = auth.currentUser;
+  const [currentUser, setCurrentUser] = useState(null);
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setCurrentUser(user);
+  });
+  return () => unsubscribe();
+}, []);
+
   const navigate = useNavigate();
 
   const handleCancel = async (bookingId, slotId) => {
@@ -126,11 +136,21 @@ const handleCheckout = async (booking) => {
     if (!currentUser) return;
 
     const fetch = async () => {
-      const q = query(collection(db, "appointments"));
-      const snap = await getDocs(q);
+      const uid = currentUser.uid;
+
+      const guestQ = query(collection(db, "appointments"), where("userId", "==", uid));
+      const merchantQ = query(collection(db, "appointments"), where("serviceOwnerId", "==", uid));
+      
+      const [guestSnap, merchantSnap] = await Promise.all([
+        getDocs(guestQ),
+        getDocs(merchantQ),
+      ]);
+      
+      const allDocs = [...guestSnap.docs, ...merchantSnap.docs];
+      
 
       const list = await Promise.all(
-        snap.docs.map(async (d) => {
+        allDocs.map(async (d) => {
           const data = d.data();
           const serviceSnap = await getDoc(doc(db, "services", data.serviceId));
           const service = serviceSnap.exists() ? serviceSnap.data() : null;

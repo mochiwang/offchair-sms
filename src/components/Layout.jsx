@@ -32,7 +32,7 @@ function Layout({ children, user, variant = "normal" }) {
   return (
     <>
       <HeroNavBar variant={variant} /> {/* 使用传入的 variant */}
-      <ChatPopup />
+      
       <div style={{ paddingTop: "64px" }}>{children}</div> {/* 给导航栏留出高度 */}
       <PaymentReminderModal />
     </>

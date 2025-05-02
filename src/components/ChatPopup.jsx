@@ -69,9 +69,10 @@ function ChatPopup() {
     const defaultX = window.innerWidth - 400;
     const defaultY = window.innerHeight - 500;
     setPosition({ x: defaultX, y: defaultY });
-
+  
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
+        console.warn("❌ 未登录，跳过加载聊天数据");
         setCurrentUser(null);
         setFriends([]);
         setStrangers([]);
@@ -79,12 +80,20 @@ function ChatPopup() {
         setActiveChatId(null);
         return;
       }
+  
       setCurrentUser(user);
-      await loadFriendsAndStrangers(user);
+  
+      try {
+        console.log("✅ 检测到登录用户，UID:", user.uid);
+        await loadFriendsAndStrangers(user);
+      } catch (err) {
+        console.error("❌ 加载聊天数据失败:", err.message);
+      }
     });
-
+  
     return () => unsubscribe();
   }, []);
+  
 
   useEffect(() => {
     const stored = localStorage.getItem("chat_after_booking");
