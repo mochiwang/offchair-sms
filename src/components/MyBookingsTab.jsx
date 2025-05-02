@@ -193,6 +193,10 @@ const handleCheckout = async (booking) => {
         appointments.map((b) => {
           const isGuest = b.userId === currentUser.uid;
           const isMerchant = b.serviceOwnerId === currentUser.uid;
+          const now = Date.now();
+          const serviceEndTime = b.endTime?.seconds * 1000 || 0;
+          const serviceCompleted = b.paid && serviceEndTime < now;
+
 
           const bgColor = isGuest ? "#f9f5ff" : "#f0f9ff";
           const borderColor = isGuest ? "#d8b4fe" : "#93c5fd";
@@ -253,6 +257,15 @@ const handleCheckout = async (booking) => {
                     </button>
                   </>
                 )}
+                {isGuest && serviceCompleted && !b.hasRated && (
+  <button
+    onClick={() => navigate(`/rate/${b.serviceId}?slotId=${b.slotId}`)}
+    style={buttonStyle("#ecfccb", "#65a30d")}
+  >
+    Leave a Rating 🌟
+  </button>
+)}
+
 
                 {isMerchant && (
                   <>

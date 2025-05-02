@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         userId,
         appointmentId, // ✅ 传入精准标识
       },
-      success_url: `${req.headers.origin}/pay/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/pay/cancel`,
     });
 
