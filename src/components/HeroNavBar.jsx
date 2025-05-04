@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import SideMenuOverlay from "./SideMenuOverlay";
 
+
+
 /**
  * HeroNavBar
  * @param {string} variant "home" | "normal"  - "home"表示首页，透明开始；"normal"表示普通页，黑色背景开始

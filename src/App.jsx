@@ -28,6 +28,8 @@ import Layout from './components/Layout';
 import PaymentReminderModal from './components/payment/PaymentReminderModal';
 import PaymentSuccess from './pages/PaymentSuccess';
 import RateService from './pages/RateService';
+import RefundHistory from './pages/RefundHistory';
+
 
 import './App.css';
 
@@ -101,8 +103,10 @@ function AppContent() {
       <Route path="/myservices" element={<RequireAuth><MyServicesPage /></RequireAuth>} />
       <Route path="/search" element={<Layout variant="normal"><SearchResults /></Layout>} />
       <Route path="/mybookings" element={<RequireAuth><MyBookingsPage /></RequireAuth>} />
+      <Route path="/refund-history" element={<RequireAuth><RefundHistory /></RequireAuth>} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/rate/:serviceId" element={<RateService />} />
+
     </Routes>
   );
 }

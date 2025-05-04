@@ -2,6 +2,8 @@ import { NavLink } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { useEffect, useState } from "react";
 import app from "../firebase";
+import { useNavigate } from "react-router-dom";
+
 
 const auth = getAuth(app);
 

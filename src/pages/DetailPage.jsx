@@ -47,6 +47,8 @@ const [comments, setComments] = useState([]);
 const [displayName, setDisplayName] = useState("匿名");
 const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
 const [showBooking, setShowBooking] = useState(true);
+const [hasPaid, setHasPaid] = useState(false);
+
 
 
 
@@ -106,6 +108,24 @@ useEffect(() => {
 
   fetchService();
 }, [id]);
+
+useEffect(() => {
+  if (!currentUser || !id) return;
+
+  const checkIfPaid = async () => {
+    const appointmentRef = query(
+      collection(db, "appointments"),
+      where("userId", "==", currentUser.uid),
+      where("serviceId", "==", id),
+      where("paid", "==", true)
+    );
+    const snap = await getDocs(appointmentRef);
+    setHasPaid(!snap.empty); // 有记录说明已付款
+  };
+
+  checkIfPaid();
+}, [currentUser, id]);
+
 
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { getAuth, signOut } from "firebase/auth";
+
+
 import "../App.css"; // 确保引入了你的动画样式
 
 function SideMenuOverlay({ currentUser, onClose }) {
@@ -37,8 +39,11 @@ function SideMenuOverlay({ currentUser, onClose }) {
             <MenuButton text="My Favorites" onClick={() => { navigate("/favorites"); onClose(); }} delay={0.4} />
             <MenuButton text="My Bookings" onClick={() => { navigate("/mybookings"); onClose(); }} delay={0.5} />
             <MenuButton text="My Reviews" onClick={() => { navigate("/myreviews"); onClose(); }} delay={0.6} />
+            <MenuButton text="Refund History" onClick={() => { navigate("/refund-history"); onClose(); }} delay={0.65} />
             <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.7} />
             <MenuButton text="Logout" onClick={handleLogout} delay={0.8} />
+            <MenuButton text="Connect Stripe" onClick={() => navigate("/onboarding/start")} delay={0.5} />
+
            
 
           </>

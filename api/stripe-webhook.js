@@ -41,21 +41,23 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const appointmentId = session.metadata?.appointmentId;
+    const paymentIntentId = session.payment_intent;
 
     console.log("💳 收到支付完成事件 for:", appointmentId);
 
-    if (!appointmentId) {
-      console.error("❌ metadata 中缺少 appointmentId");
-      return res.status(400).send("Missing appointmentId");
+    if (!appointmentId || !paymentIntentId) {
+      console.error("❌ 缺少 appointmentId 或 paymentIntentId");
+      return res.status(400).send("Missing appointmentId or paymentIntentId");
     }
 
     try {
       const db = admin.firestore();
       await db.collection('appointments').doc(appointmentId).update({
         paid: true,
+        paymentIntentId: paymentIntentId, // ✅ 保存退款关键字段
       });
 
-      console.log(`✅ Firestore 已成功将 ${appointmentId} 标记为已付款`);
+      console.log(`✅ Firestore 已成功将 ${appointmentId} 标记为已付款，已保存 paymentIntentId`);
     } catch (err) {
       console.error('❌ 更新 Firestore 失败:', err);
       return res.status(500).send('Firestore update failed');

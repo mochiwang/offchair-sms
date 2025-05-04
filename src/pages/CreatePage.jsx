@@ -1,4 +1,4 @@
-// src/pages/CreatePage.jsx
+// ✅ Updated CreatePage.jsx with realAddress field
 import { useState, useEffect } from 'react';
 import app from '../firebase';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -20,6 +20,7 @@ function CreatePage() {
     description: '',
     price: '',
     zipCode: '',
+    realAddress: '', // ✅ new field
     images: [],
     tagInput: '',
     tags: [],
@@ -138,6 +139,7 @@ function CreatePage() {
       description: form.description,
       price: Number(form.price),
       zipCode: form.zipCode,
+      realAddress: form.realAddress.trim(), // ✅ added
       latitude: geo.lat,
       longitude: geo.lon,
       images: form.images,
@@ -170,7 +172,20 @@ function CreatePage() {
         <input name="title" value={form.title} onChange={handleChange} placeholder="Title" className="input-box" required />
         <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" rows={4} className="input-box" required />
         <input name="price" value={form.price} onChange={handleChange} placeholder="Price" className="input-box" required />
-        <input name="zipCode" value={form.zipCode} onChange={handleChange} placeholder="Address or Zip Code" className="input-box" required />
+        <input name="zipCode" value={form.zipCode} onChange={handleChange} placeholder="Zip Code" className="input-box" required />
+
+        {/* ✅ New field */}
+        <input
+          name="realAddress"
+          value={form.realAddress}
+          onChange={handleChange}
+          placeholder="Full address (shown after payment)"
+          className="input-box"
+          required
+        />
+        <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '-1rem' }}>
+          Your address is only shown after payment, and only to the guest who booked this service.
+        </p>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {form.images.map((url, idx) => (
