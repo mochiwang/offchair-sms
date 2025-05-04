@@ -132,6 +132,11 @@ function CreatePage() {
       alert('Please login first!');
       return;
     }
+    // ✅ 获取当前用户的 stripeAccountId
+const userRef = doc(db, "users", user.uid);
+const userSnap = await getDoc(userRef);
+const userData = userSnap.exists() ? userSnap.data() : null;
+
     const geo = await fetchCoordinates(form.zipCode);
     const keywords = generateKeywords(form.title, form.description, form.tags, form.zipCode);
     const newService = {
@@ -147,6 +152,7 @@ function CreatePage() {
       keywords: keywords,
       createdAt: serverTimestamp(),
       userId: user.uid,
+      stripeAccountId: userData?.stripeAccountId || null,  
     };
 
     try {

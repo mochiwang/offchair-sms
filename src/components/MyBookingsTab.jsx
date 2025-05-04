@@ -28,6 +28,17 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 function MyBookingsTab() {
   const [appointments, setAppointments] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  // ✅ 通用按钮样式函数
+const buttonStyle = (bg, border, color = "#000") => ({
+  backgroundColor: bg,
+  border: `1px solid ${border}`,
+  color,
+  padding: "0.5rem 1rem",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: 500,
+});
+
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (user) => {
     setCurrentUser(user);
