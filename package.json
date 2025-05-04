@@ -17,6 +17,7 @@
     "@stripe/stripe-js": "^7.2.0",
     "browser-image-compression": "^2.0.2",
     "firebase": "^11.6.0",
+    "firebase-admin": "^13.3.0",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",
     "react-calendar": "^5.1.0",
