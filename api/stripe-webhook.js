@@ -13,7 +13,7 @@ if (!admin.apps.length) {
 
 export const config = {
   api: {
-    bodyParser: false, // ❗ 必须禁用 bodyParser 否则 Stripe 验证失败
+    bodyParser: false, // ❗必须禁用 bodyParser，否则 Stripe 验证失败
   },
 };
 
@@ -35,41 +35,41 @@ export default async function handler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // ✅ 处理成功支付事件
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    const appointmentId = session.metadata?.appointmentId;
-    const paymentIntentId = session.payment_intent; // Stripe 标准字段
+    // ✅ 打印完整 session 对象（调试专用）
+    console.log("🧾 完整 session 内容:", JSON.stringify(session, null, 2));
 
-    // ✅ 清晰日志：检查所有相关字段
-    console.log(`💳 收到支付成功通知：
-- session.id: ${session.id}
-- appointmentId: ${appointmentId}
-- paymentIntentId: ${paymentIntentId}
-- session.payment_intent (raw):`, session.payment_intent);
+    const appointmentId = session.metadata?.appointmentId;
+    const paymentIntentId =
+      typeof session.payment_intent === 'object'
+        ? session.payment_intent.id
+        : session.payment_intent || session.paymentIntent;
+
+    console.log("💳 收到支付成功通知");
+    console.log("📌 appointmentId:", appointmentId);
+    console.log("📌 paymentIntentId:", paymentIntentId);
 
     if (!appointmentId || !paymentIntentId) {
-      console.error("❌ 缺少 appointmentId 或 paymentIntentId，终止更新");
+      console.error("❌ 缺少 appointmentId 或 paymentIntentId");
       return res.status(400).send("Missing appointmentId or paymentIntentId");
     }
 
     try {
       const db = admin.firestore();
-
       await db.collection('appointments').doc(appointmentId).update({
         paid: true,
         paymentIntentId,
         paidAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      console.log(`✅ Firestore 更新成功：已将 ${appointmentId} 标记为已付款`);
+      console.log(`✅ Firestore 更新成功: ${appointmentId} 已标记为已付款`);
     } catch (err) {
       console.error('❌ Firestore 更新失败:', err.message);
       return res.status(500).send('Firestore update failed');
     }
   }
 
-  // ✅ 告诉 Stripe：我们成功处理了
   res.status(200).json({ received: true });
 }
