@@ -39,7 +39,8 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const appointmentId = session.metadata?.appointmentId;
-    const paymentIntentId = session.payment_intent ?? session.paymentIntent;
+    const paymentIntentId = session.payment_intent || session.paymentIntent || session?.payment_intent?.id;
+
     console.log("💳 收到支付成功通知，appointmentId:", appointmentId, "paymentIntentId:", paymentIntentId);
 
 
