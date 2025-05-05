@@ -1,6 +1,8 @@
 import Stripe from 'stripe';
 import { buffer } from 'micro';
 import admin from 'firebase-admin';
+console.log("🔥 stripe-webhook 被调用了！");
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
