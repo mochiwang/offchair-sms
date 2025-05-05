@@ -42,6 +42,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: accountLink.url });
   } catch (err) {
     console.error('Error creating Stripe account:', err);
-    return res.status(500).send('Internal Server Error');
+    return res.status(500).json({ error: 'Internal Server Error' });
+
   }
 }
