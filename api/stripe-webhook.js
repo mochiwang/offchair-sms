@@ -40,9 +40,8 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const appointmentId = session.metadata?.appointmentId;
     const paymentIntentId = session.payment_intent ?? session.paymentIntent;
+    console.log("💳 收到支付成功通知，appointmentId:", appointmentId, "paymentIntentId:", paymentIntentId);
 
-
-    console.log("💳 收到支付成功通知，appointmentId:", appointmentId);
 
     if (!appointmentId || !paymentIntentId) {
       console.error("❌ 缺少 appointmentId 或 paymentIntentId");
