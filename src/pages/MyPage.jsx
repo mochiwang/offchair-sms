@@ -118,6 +118,13 @@ function MyPage() {
         <div>
           <h2>{profile.displayName || "未命名用户"}</h2>
           <p style={{ color: "#888" }}>{user?.email}</p>
+            {/* ✅ 添加位置从这里开始 */}
+  {profile?.stripeAccountId ? (
+    <p style={{ color: "green", margin: "0.5rem 0" }}>✅ 已连接 Stripe 收款账户</p>
+  ) : (
+    <ConnectStripeButton uid={user?.uid} email={user?.email} />
+  )}
+  {/* ✅ 添加位置结束 */}
           <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
   <button
     onClick={() => setShowEditModal(true)}
