@@ -4,7 +4,6 @@ import admin from 'firebase-admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ✅ 初始化 Firebase Admin SDK（只执行一次）
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIAL)),
@@ -13,12 +12,12 @@ if (!admin.apps.length) {
 
 export const config = {
   api: {
-    bodyParser: false, // ❗必须禁用 bodyParser，否则 Stripe 验证失败
+    bodyParser: false,
   },
 };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
   const sig = req.headers['stripe-signature'];
   const buf = await buffer(req);
@@ -38,9 +37,12 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    // ✅ 打印完整 session 对象（调试专用）
-    console.log("🧾 完整 session 内容:", JSON.stringify(session, null, 2));
+    // ✅ Step 1: 打印完整结构和关键字段
+    console.log("🧾 Session 全部内容:", JSON.stringify(session, null, 2));
+    console.log("🧾 session.metadata:", JSON.stringify(session.metadata));
+    console.log("🧾 session.payment_intent:", JSON.stringify(session.payment_intent));
 
+    // ✅ Step 2: 抽取关键数据
     const appointmentId = session.metadata?.appointmentId;
     const paymentIntentId =
       typeof session.payment_intent === 'object'
@@ -56,6 +58,7 @@ export default async function handler(req, res) {
       return res.status(400).send("Missing appointmentId or paymentIntentId");
     }
 
+    // ✅ Step 3: 写入 Firestore
     try {
       const db = admin.firestore();
       await db.collection('appointments').doc(appointmentId).update({
@@ -71,5 +74,6 @@ export default async function handler(req, res) {
     }
   }
 
+  // ✅ Step 4: 返回 200，避免 Stripe 重试
   res.status(200).json({ received: true });
 }
