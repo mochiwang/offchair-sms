@@ -17,6 +17,8 @@ import { useNavigate } from "react-router-dom";
 import Masonry from 'react-masonry-css';
 import MyBookingsTab from "../components/MyBookingsTab";
 import MyReviewsTab from "../components/MyReviewsTab";
+import ConnectStripeButton from "../components/ConnectStripeButton";
+
 
 
 
