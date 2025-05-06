@@ -159,7 +159,7 @@ function SideMenuOverlay({ currentUser, onClose }) {
               >
                 💰 Earnings This Month: ${monthlyEarnings.toFixed(2)}
               </button>
-              <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.6} />
+              
               <MenuButton text="Logout" onClick={handleLogout} delay={0.7} />
             </>
           ) : (
@@ -169,14 +169,14 @@ function SideMenuOverlay({ currentUser, onClose }) {
               <MenuButton text="My Bookings" onClick={() => { navigate("/mybookings"); onClose(); }} delay={0.3} />
               <MenuButton text="Transaction History" onClick={() => { navigate("/transaction-history"); onClose(); }} delay={0.45} />
 
-              <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.5} />
+           
               <MenuButton text="Logout" onClick={handleLogout} delay={0.6} />
             </>
           )
         ) : (
           <>
             <MenuButton text="Login" onClick={() => { navigate("/login"); onClose(); }} delay={0.2} />
-            <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.3} />
+
           </>
         )}
       </div>
