@@ -46,8 +46,9 @@ function DetailPage() {
 const [comments, setComments] = useState([]);
 const [displayName, setDisplayName] = useState("匿名");
 const [visibleComments, setVisibleComments] = useState(5); // 初始显示 5 条
-const [showBooking, setShowBooking] = useState(true);
+const [showBooking, setShowBooking] = useState(false);
 const [hasPaid, setHasPaid] = useState(false);
+
 
 
 
@@ -293,7 +294,7 @@ useEffect(() => {
         await setDoc(
           doc(db, "users", guestUid, "receivedFromMerchants", `${id}_${completedSlotId}`),
           {
-            merchantId: currentUser.uid,
+            serviceOwnerId: currentUser.uid,
             merchantName: displayName || "商家",
             serviceTitle: service.title,
             rating: newRating,

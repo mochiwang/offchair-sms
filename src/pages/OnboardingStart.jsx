@@ -32,7 +32,7 @@ function OnboardingStart() {
       }
 
       try {
-        const res = await fetch("/api/create-stripe-account", {
+        const res = await fetch("https://offchair-backend.vercel.app/api/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid: user.uid, email: user.email }),

@@ -29,6 +29,10 @@ import PaymentReminderModal from './components/payment/PaymentReminderModal';
 import PaymentSuccess from './pages/PaymentSuccess';
 import RateService from './pages/RateService';
 import RefundHistory from './pages/RefundHistory';
+import GuestTransactionHistory from './pages/GuestTransactionHistory';
+import ReservationsForMe from './pages/ReservationsForMe';
+import MerchantFinancePage from "./pages/MerchantFinancePage";
+
 
 
 import './App.css';
@@ -106,6 +110,13 @@ function AppContent() {
       <Route path="/refund-history" element={<RequireAuth><RefundHistory /></RequireAuth>} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/rate/:serviceId" element={<RateService />} />
+      <Route path="/transaction-history" element={<RequireAuth><Layout user={user}><GuestTransactionHistory /></Layout></RequireAuth>} />
+      <Route path="/reservationsForMe" element={<RequireAuth><Layout user={user}><ReservationsForMe /></Layout></RequireAuth>} />
+      <Route path="/finance" element={<MerchantFinancePage />} />
+
+
+
+
 
     </Routes>
   );

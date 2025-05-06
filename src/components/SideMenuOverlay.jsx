@@ -1,12 +1,86 @@
 import { useNavigate } from "react-router-dom";
 import { getAuth, signOut } from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { startOfMonth } from "date-fns";
 
-
-import "../App.css"; // 确保引入了你的动画样式
+import "../App.css";
 
 function SideMenuOverlay({ currentUser, onClose }) {
   const navigate = useNavigate();
   const auth = getAuth();
+  const db = getFirestore();
+
+  const [role, setRole] = useState(null);
+  const [stripeAccountId, setStripeAccountId] = useState(null);
+  const [monthlyEarnings, setMonthlyEarnings] = useState(0);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (currentUser) {
+        const docRef = doc(db, "users", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setRole(data.role);
+          setStripeAccountId(data.stripeAccountId || null);
+        }
+      }
+    };
+    fetchUserData();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const fetchMonthlyEarnings = async () => {
+      if (currentUser && role === "merchant") {
+        const beginningOfMonth = Timestamp.fromDate(startOfMonth(new Date()));
+        const q = query(
+          collection(db, "appointments"),
+          where("serviceOwnerId", "==", currentUser.uid),
+          where("paid", "==", true),
+          where("startTime", ">=", beginningOfMonth)
+        );
+        
+        const snapshot = await getDocs(q);
+        let total = 0;
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          total += data.amount || 0;
+        });
+        setMonthlyEarnings(total / 100); // cents to dollars
+      }
+    };
+
+    fetchMonthlyEarnings();
+  }, [currentUser, role]);
+
+  const handleToggleRole = async () => {
+    if (!currentUser) return;
+    const userRef = doc(db, "users", currentUser.uid);
+
+    if (role === "guest") {
+      if (!stripeAccountId) {
+        navigate("/onboarding/start");
+        onClose();
+        return;
+      }
+      await updateDoc(userRef, { role: "merchant" });
+      setRole("merchant");
+    } else {
+      await updateDoc(userRef, { role: "guest" });
+      setRole("guest");
+    }
+  };
 
   const handleProtectedNavigation = (path) => {
     if (currentUser) {
@@ -26,30 +100,81 @@ function SideMenuOverlay({ currentUser, onClose }) {
   return (
     <div className="overlay-container" onClick={onClose}>
       <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
-        {/* 三道杠弹出的菜单内容 */}
-
-        {/* 所有人都能看到 */}
-        <MenuButton text="Post a Service" onClick={() => handleProtectedNavigation("/create")} delay={0.1} />
+        {currentUser && (
+          <div
+            style={{
+              color: "#fff",
+              padding: "1rem",
+              textAlign: "center",
+              marginTop: "1rem",
+              backgroundColor: "rgba(0,0,0,0.6)",
+              zIndex: 10,
+              position: "relative",
+              borderBottom: "1px solid #555",
+            }}
+          >
+            Current Role: <strong>{role === "merchant" ? "Merchant" : "Guest"}</strong>
+            <br />
+            <button
+              onClick={handleToggleRole}
+              style={{
+                marginTop: "0.5rem",
+                backgroundColor: "#fff",
+                color: "#333",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+              }}
+            >
+              Switch to {role === "merchant" ? "Guest" : "Merchant"}
+            </button>
+          </div>
+        )}
 
         {currentUser ? (
-          <>
-            {/* 登录后才出现 */}
-            <MenuButton text="My Page" onClick={() => { navigate("/mypage"); onClose(); }} delay={0.2} />
-            <MenuButton text="My Services" onClick={() => { navigate("/myservices"); onClose(); }} delay={0.3} />
-            <MenuButton text="My Favorites" onClick={() => { navigate("/favorites"); onClose(); }} delay={0.4} />
-            <MenuButton text="My Bookings" onClick={() => { navigate("/mybookings"); onClose(); }} delay={0.5} />
-            <MenuButton text="My Reviews" onClick={() => { navigate("/myreviews"); onClose(); }} delay={0.6} />
-            <MenuButton text="Refund History" onClick={() => { navigate("/refund-history"); onClose(); }} delay={0.65} />
-            <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.7} />
-            <MenuButton text="Logout" onClick={handleLogout} delay={0.8} />
-            <MenuButton text="Connect Stripe" onClick={() => navigate("/onboarding/start")} delay={0.5} />
+          role === "merchant" ? (
+            <>
+              <MenuButton text="My Page" onClick={() => { navigate("/mypage"); onClose(); }} delay={0.1} />
+              <MenuButton text="My Services" onClick={() => { navigate("/myservices"); onClose(); }} delay={0.2} />
+              <MenuButton text="Reservations for Me" onClick={() => { navigate("/ReservationsForMe"); onClose(); }} delay={0.3} />
 
-           
+              {/* 💰 Earnings 按钮 */}
+              <button
+                onClick={() => { navigate("/finance"); onClose(); }}
+                style={{
+                  backgroundColor: "#8B5CF6",
+                  color: "white",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  padding: "0.75rem 1.25rem",
+                  borderRadius: "12px",
+                  margin: "0.5rem 1rem",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "calc(100% - 2rem)",
+                  transition: "background-color 0.3s ease",
+                }}
+              >
+                💰 Earnings This Month: ${monthlyEarnings.toFixed(2)}
+              </button>
+              <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.6} />
+              <MenuButton text="Logout" onClick={handleLogout} delay={0.7} />
+            </>
+          ) : (
+            <>
+              <MenuButton text="My Page" onClick={() => { navigate("/mypage"); onClose(); }} delay={0.1} />
+              <MenuButton text="My Favorites" onClick={() => { navigate("/favorites"); onClose(); }} delay={0.2} />
+              <MenuButton text="My Bookings" onClick={() => { navigate("/mybookings"); onClose(); }} delay={0.3} />
+              <MenuButton text="Transaction History" onClick={() => { navigate("/transaction-history"); onClose(); }} delay={0.45} />
 
-          </>
+              <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.5} />
+              <MenuButton text="Logout" onClick={handleLogout} delay={0.6} />
+            </>
+          )
         ) : (
           <>
-            {/* 未登录时 */}
             <MenuButton text="Login" onClick={() => { navigate("/login"); onClose(); }} delay={0.2} />
             <MenuButton text="Help" onClick={() => { navigate("/help"); onClose(); }} delay={0.3} />
           </>

@@ -27,11 +27,18 @@ function LoginPage() {
 
 
 
-  const ensureUserInFirestore = async (uid, email) => {
+  const ensureUserInFirestore = async (uid, email, isRegistering = false) => {
     const userRef = doc(db, "users", uid);
-    await setDoc(userRef, { email, createdAt: serverTimestamp() }, { merge: true });
-    
+    const baseData = {
+      email,
+      createdAt: serverTimestamp(),
+    };
+  
+    const dataToSet = isRegistering ? { ...baseData, role: "guest" } : baseData;
+  
+    await setDoc(userRef, dataToSet, { merge: true });
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +46,8 @@ function LoginPage() {
       if (isRegister) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        await ensureUserInFirestore(user.uid, user.email);
+        await ensureUserInFirestore(user.uid, user.email, true);
+
 
 
         alert("✅ 登录成功，请点击确认继续");
@@ -50,7 +58,9 @@ function LoginPage() {
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        await ensureUserInFirestore(user.uid, user.email);
+        await ensureUserInFirestore(user.uid, user.email); // ✅ 登录只合并数据，不写 role
+
+
         navigate("/");
       }
     } catch (error) {

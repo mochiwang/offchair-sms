@@ -63,10 +63,10 @@ const serviceSnap = await getDoc(serviceRef);
 const serviceData = serviceSnap.exists() ? serviceSnap.data() : null;
 
 if (serviceData) {
-  const merchantId = serviceData.userId;
+  const serviceOwnerId = serviceData.userId;
   const appointmentId = `${currentUser.uid}_${slotId}`;
 
-  await setDoc(doc(db, "users", merchantId, "hostReviews", appointmentId), {
+  await setDoc(doc(db, "users", serviceOwnerId, "hostReviews", appointmentId), {
     guestName: currentUser.displayName || "Anonymous",
     rating,
     text: comment,
